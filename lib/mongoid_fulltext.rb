@@ -19,7 +19,7 @@ module Mongoid::FullTextSearch
       before_save :extract_ngrams
     end
 
-    def fulltext_search(query)
+    def fulltext_search(query, max_results=nil)
       ngrams = all_ngrams(query)
       return self.criteria if ngrams.empty?
       query = {'$or' => ngrams.map{ |ngram| {'_ngrams.%s' % ngram => {'$gte' => 0 }}}}
@@ -43,8 +43,9 @@ module Mongoid::FullTextSearch
         }
       EOS
       options = {:scope => {:ngrams => ngrams}, :query => query}
-      ids = collection.map_reduce(map, reduce, options).find().sort(['value',-1]).map{ |result| result['_id'] }
-      self.where(:_id.in => ids)
+      ids = collection.map_reduce(map, reduce, options).find().sort(['value',-1])
+      ids = ids.limit(max_results) if !max_results.nil?
+      self.where(:_id.in => ids.map{ |result| result['_id']})
     end
     
     def all_ngrams(str, bound_number_returned=true)
