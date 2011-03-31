@@ -1,0 +1,3 @@
+= mongoid_fulltext
+
+Full-text search using n-gram matching for the Mongoid ODM.
