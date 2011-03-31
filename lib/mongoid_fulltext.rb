@@ -11,6 +11,8 @@ module Mongoid::FullTextSearch
       self.ngram_alphabet = Hash['abcdefghijklmnopqrstuvwxyz0123456789 '.split('').map{ |ch| [ch,ch] }]
       self.max_ngrams_to_search = 6
       self.ngram_fields = args
+      self.fulltext_prefix_score = 3
+      self.fulltext_infix_score = 1
       field :_ngrams, :type => Hash
       index :_ngrams
       before_save :extract_ngrams
@@ -56,7 +58,8 @@ module Mongoid::FullTextSearch
 
   def extract_ngrams
     ngrams = self.ngram_fields.map { |field| Artwork.all_ngrams(self[field], self.ngram_width) }.flatten
-    self._ngrams = Hash[ngrams.map { |ngram| [ngram, 1] }]
+    self._ngrams = Hash[ngrams[1..-1].map { |ngram| [ngram, self.fulltext_infix_score] }]
+    self._ngrams[ngrams.first] = self.fulltext_prefix_score
   end
   
 end
