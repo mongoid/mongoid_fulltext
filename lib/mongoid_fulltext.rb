@@ -15,6 +15,7 @@ module Mongoid::FullTextSearch
       self.fulltext_prefix_score = 3
       self.fulltext_infix_score = 1
       field :_ngrams, :type => Hash
+      field :_ngrams_weight, :type => Integer
       index :_ngrams
       before_save :extract_ngrams
     end
@@ -27,25 +28,31 @@ module Mongoid::FullTextSearch
         function() {
           var score = 0;
           for (i in ngrams) {
-            ngram_score = this._ngrams[ngrams[i]];
-            if (ngram_score != null) {
-              score += ngram_score;
+            var match_val = this._ngrams[ngrams[i]]
+            if (match_val != null) {
+              if (i == 0) {
+                score += match_val //prefix match
+              } else {
+                score += 1
+              }  
             }
           }
-          if (score > 0) {
-            emit(this._id, score)
-          }
+          emit(this, score/this._ngrams_weight)
         }
       EOS
       reduce = <<-EOS
         function(key, values) {
-          return(values[0])
+          score = 0
+          for (i in values) {
+            score += values[i]
+          }
+          return(score)
         }
       EOS
-      options = {:scope => {:ngrams => ngrams}, :query => query}
-      ids = collection.map_reduce(map, reduce, options).find().sort(['value',-1])
-      ids = ids.limit(max_results) if !max_results.nil?
-      self.where(:_id.in => ids.map{ |result| result['_id']})
+      options = {:scope => {:ngrams => ngrams }, :query => query}
+      results = collection.map_reduce(map, reduce, options).find().sort(['value',-1])
+      results = results.limit(max_results) if !max_results.nil?
+      results.map{ |result| self.instantiate(result['_id']) }
     end
     
     def all_ngrams(str, bound_number_returned=true)
@@ -64,13 +71,15 @@ module Mongoid::FullTextSearch
   protected
 
   def extract_ngrams
-    ngrams = self.ngram_fields.map { |field| Artwork.all_ngrams(self.send(field), false) }.flatten
+    field_values = self.ngram_fields.map { |field| self.send(field) }
+    ngrams = field_values.map { |value| self.class.all_ngrams(value, false) }.flatten
     if ngrams.empty?
       self._ngrams = {}
       return
     end
     first, rest = ngrams.first, ngrams[1..-1]
     self._ngrams = Hash[rest.map { |ngram| [ngram, self.fulltext_infix_score] }]
+    self._ngrams_weight = field_values.inject(0) { |accum, item| accum += item.length }
     self._ngrams[first] = self.fulltext_prefix_score
   end
   

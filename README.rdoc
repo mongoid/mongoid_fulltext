@@ -1,4 +1,5 @@
-= mongoid_fulltext
+Mongoid Fulltext Search
+=======================
 
 Full-text search using n-gram matching for the Mongoid ODM. 
 
@@ -46,12 +47,29 @@ of their corresponding slugs:
 
     Artwork.fulltext_search("untitled", 20).each { |slug| puts 'slug: ' + slug }
 
+By default, index terms are stored with each model instance in an embedded hash. But you
+can also use a separate collection to store the index data by providing a name for the
+index collection:
+
+    class Artwork
+      include Mongoid::Document
+      include Mongoid::FullTextSearch
+
+      field :title
+      fulltext_search_in :title, :index_collection => 'artwork_fulltext_index'
+    end
+
+Using a separate collection for the index can speed up your queries dramatically, but there's 
+a little more overhead when models are modified or deleted. The string specifying the index 
+collection must be a valid MongoDB collection name; it will correspond directly to a collection 
+in the same database as these models that's used to store the index data.
+
 If you're indexing multiple models, you may find that you need to combine results to create
 a single result set. For example, if both the `Artist` model and the `Artwork` model are
 indexed for full-text search, then to get results from both, you'd have to call 
 `Artist.fulltext_search` and `Artwork.fulltext_search` and combine the results yourself. If
 your intention is instead to get the top k results from both Artists and Artworks, you can
-merge both into a single index by specifying an `index_collection` key:
+merge both into a single index by using the same `:index_collection` value:
 
     class Artwork
       include Mongoid::Document
@@ -75,6 +93,3 @@ that single index that's accessible from `Mongoid::FullTextSearch`:
     index = Mongoid::FullTextSearch.get_index('artworks_and_artists')
     index.fulltext_search('picasso walking down the stairs')
     
-The string specifying the `index_collection` must be a valid MongoDB collection name;
-it will correspond directly to a collection in the same database as these models that's
-used to store the index data.
