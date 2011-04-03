@@ -2,25 +2,42 @@ module Mongoid::FullTextSearch
   extend ActiveSupport::Concern
 
   included do
-    cattr_accessor :ngram_fields, :ngram_width, :ngram_alphabet, :max_ngrams_to_search, :fulltext_prefix_score, :fulltext_infix_score
+    cattr_accessor :ngram_fields, :ngram_width, :ngram_alphabet, :max_ngrams_to_search, \
+                   :fulltext_prefix_score, :fulltext_infix_score, :index_collection
   end
 
   module ClassMethods
 
     def fulltext_search_in(*args)
+      if args.last.is_a?(Hash) and args.last.has_key?(:index_collection)
+        self.index_collection = args.pop[:index_collection]
+      end
       self.ngram_width = 3
       self.ngram_alphabet = Hash['abcdefghijklmnopqrstuvwxyz0123456789 '.split('').map{ |ch| [ch,ch] }]
       self.max_ngrams_to_search = 6
       self.ngram_fields = args
       self.fulltext_prefix_score = 3
       self.fulltext_infix_score = 1
-      field :_ngrams, :type => Hash
-      field :_ngrams_weight, :type => Integer
-      index :_ngrams
-      before_save :extract_ngrams
+      if self.index_collection.nil?
+        field :_ngrams, :type => Hash
+        field :_ngrams_weight, :type => Integer
+        index :_ngrams
+        before_save :update_internal_ngrams
+      else
+        #TODO: ensure index on self.index_collection
+        before_save :update_external_ngrams
+      end
     end
 
     def fulltext_search(query, max_results=nil)
+      if self.index_collection.nil? 
+        fulltext_search_internal(query, max_results)
+      else
+        fulltext_search_external(query, max_results)
+      end
+    end
+
+    def fulltext_search_internal(query, max_results=nil)
       ngrams = all_ngrams(query)
       return self.criteria if ngrams.empty?
       query = {'$or' => ngrams.map{ |ngram| {'_ngrams.%s' % ngram => {'$gte' => 0 }}}}
@@ -54,6 +71,10 @@ module Mongoid::FullTextSearch
       results = results.limit(max_results) if !max_results.nil?
       results.map{ |result| self.instantiate(result['_id']) }
     end
+
+    def fulltext_search_external(query, max_results=nil)
+      #TODO
+    end
     
     def all_ngrams(str, bound_number_returned=true)
       return [] if str.nil? or str.length < self.ngram_width
@@ -70,7 +91,7 @@ module Mongoid::FullTextSearch
 
   protected
 
-  def extract_ngrams
+  def update_internal_ngrams
     field_values = self.ngram_fields.map { |field| self.send(field) }
     ngrams = field_values.map { |value| self.class.all_ngrams(value, false) }.flatten
     if ngrams.empty?
@@ -81,6 +102,10 @@ module Mongoid::FullTextSearch
     self._ngrams = Hash[rest.map { |ngram| [ngram, self.fulltext_infix_score] }]
     self._ngrams_weight = field_values.inject(0) { |accum, item| accum += item.length }
     self._ngrams[first] = self.fulltext_prefix_score
+  end
+
+  def update_external_ngrams
+    #TODO
   end
   
 end

@@ -4,21 +4,10 @@ module Mongoid
   describe FullTextSearch do
     context "with default settings" do
       
-      let!(:flower_myth) do
-        BasicArtwork.create(:title => 'Flower Myth')
-      end
-      
-      let!(:flowers) do
-        BasicArtwork.create(:title => 'Flowers')
-      end
-
-      let!(:lowered) do
-        BasicArtwork.create(:title => 'Lowered')
-      end
-
-      let!(:cookies) do
-        BasicArtwork.create(:title => 'Cookies')
-      end
+      let!(:flower_myth) { BasicArtwork.create(:title => 'Flower Myth') }
+      let!(:flowers)     { BasicArtwork.create(:title => 'Flowers') }
+      let!(:lowered)     { BasicArtwork.create(:title => 'Lowered') }
+      let!(:cookies)     { BasicArtwork.create(:title => 'Cookies') }
       
       it "returns exact matches" do
         BasicArtwork.fulltext_search('Flower Myth', 1).first.should == flower_myth
