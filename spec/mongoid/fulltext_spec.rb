@@ -115,6 +115,11 @@ module Mongoid
         ExternalArtist.fulltext_search('and').first.should == andy_warhol
       end
 
+      it "returns results for a single model when passed the :use_internal_index flag" do
+        ExternalArtist.fulltext_search('picasso warhol', :use_internal_index => true).should == [pablo_picasso, andy_warhol]
+        ExternalArtwork.fulltext_search('picasso warhol', :use_internal_index => true).should == [warhol, portrait_of_picasso]
+      end
+
     end
   end
 end
