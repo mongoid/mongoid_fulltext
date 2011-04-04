@@ -33,23 +33,6 @@ pass the `:max_results` parameter:
 
     Artist.fulltext_search("vince vangogh", :max_results => 5)
 
-If you want something less than a Mongoid::Criteria returned, you can specify this with
-the `:returns` key:
-
-    class Artwork
-      include Mongoid::Document
-      include Mongoid::FullTextSearch
-
-      field :title
-      field :slug
-      fulltext_search_in :title, :returns => :slug
-    end
-
-And a full-text search on the Artwork model will now search all titles and return an array 
-of their corresponding slugs:
-
-    Artwork.fulltext_search("untitled").each { |slug| puts 'slug: ' + slug }
-
 By default, index terms are stored with each model instance in an embedded hash. But you
 can also use an 'external' collection to store the index data by providing collection name
 as the `external_collection` parameter:
@@ -100,3 +83,7 @@ retrieve only results of that model's type by passing the `:use_internal_index` 
 
     Artist.fulltext_search('picasso', :use_internal_index => true)
     
+Running the specs
+-----------------
+
+To run the specs, execute `rake spec`. You need a local MongoDB instance to run the specs.

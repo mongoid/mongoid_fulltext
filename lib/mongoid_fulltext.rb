@@ -9,8 +9,9 @@ module Mongoid::FullTextSearch
   module ClassMethods
 
     def fulltext_search_in(*args)
-      if args.last.is_a?(Hash) and args.last.has_key?(:external_index)
-        self.external_index = args.pop[:external_index]
+      if args.last.is_a?(Hash)
+        hash_args = args.pop
+        self.external_index = hash_args[:external_index]
       end
       alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789 '
       self.ngram_width = 3
