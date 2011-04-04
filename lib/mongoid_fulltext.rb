@@ -18,13 +18,14 @@ module Mongoid::FullTextSearch
       self.ngram_fields = args
       self.fulltext_prefix_score = 3
       self.fulltext_infix_score = 1
+      field :_ngrams, :type => Hash
+      field :_ngrams_weight, :type => Integer
+      index :_ngrams
       if self.index_collection.nil?
-        field :_ngrams, :type => Hash
-        field :_ngrams_weight, :type => Integer
-        index :_ngrams
         before_save :update_internal_ngrams
       else
-        #TODO: ensure index on self.index_collection
+        coll = self.collection.db.collection(self.index_collection)
+        coll.ensure_index([['ngram', Mongo::ASCENDING]])
         before_save :update_external_ngrams
       end
     end
@@ -96,16 +97,25 @@ module Mongoid::FullTextSearch
     ngrams = field_values.map { |value| self.class.all_ngrams(value, false) }.flatten
     if ngrams.empty?
       self._ngrams = {}
-      return
+      return [nil, nil]
     end
     first, rest = ngrams.first, ngrams[1..-1]
     self._ngrams = Hash[rest.map { |ngram| [ngram, self.fulltext_infix_score] }]
     self._ngrams_weight = field_values.inject(0) { |accum, item| accum += item.length }
     self._ngrams[first] = self.fulltext_prefix_score
+    [first, rest]
   end
 
   def update_external_ngrams
-    #TODO
+    # remove existing ngrams from external index
+    coll = self.collection.db.collection(self.index_collection)
+    self._ngrams.each { |ngram| coll.update({'ngram' => ngram}, {'$unset' => {self._id => 1}})}
+    # update internal record so that we can remove these next time we update
+    first, rest = update_internal_ngrams
+    return if first.nil? and rest.nil?
+    # update new ngrams in external index
+    coll.update({'ngram' => first}, {'$inc' => {self._id => self.fulltext_prefix_score}})
+    rest.each { |ngram| coll.update({'ngram' => ngram}, {'$inc'=> {self._id => self.fulltext_infix_score}})}
   end
   
 end
