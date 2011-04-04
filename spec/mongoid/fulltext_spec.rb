@@ -30,7 +30,7 @@ module Mongoid
       it "prefers prefix matches" do
         [flowers, flower_myth].should include(BasicArtwork.fulltext_search('Floweockies').first)
         BasicArtwork.fulltext_search('Lowers').first.should == lowered
-        BasicArtwork.fulltext_search('Cookieflowers').first.should == cookies
+        BasicArtwork.fulltext_search('Cookilowers').first.should == cookies
       end
 
       it "returns an empty result set for an empty query" do
@@ -101,6 +101,18 @@ module Mongoid
       it "prefers prefix matches" do
         ExternalArtist.fulltext_search('Pablo Warhol').first.should == pablo_picasso
         ExternalArtist.fulltext_search('Andy Picasso').first.should == andy_warhol
+      end
+
+      it "returns an empty result set for an empty query" do
+        ExternalArtist.fulltext_search('').empty?.should be_true
+      end
+
+      it "returns an empty result set for a query that doesn't contain any characters in the alphabet" do
+        ExternalArtwork.fulltext_search('#$%!$#*%*').empty?.should be_true
+      end
+
+      it "returns results for a query that contains only a single ngram" do
+        ExternalArtist.fulltext_search('and').first.should == andy_warhol
       end
 
     end

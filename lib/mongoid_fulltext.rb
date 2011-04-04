@@ -20,7 +20,6 @@ module Mongoid::FullTextSearch
       self.fulltext_infix_score = 1
       self.ngram_alphabet = Hash[alphabet.split('').map{ |ch| [ch,ch] }]
       field :_ngrams, :type => Hash
-      field :_ngrams_weight, :type => Integer
       index :_ngrams
       if self.external_index.nil?
         before_save :update_internal_ngrams
@@ -49,14 +48,10 @@ module Mongoid::FullTextSearch
           for (i in ngrams) {
             var match_val = this._ngrams[ngrams[i]]
             if (match_val != null) {
-              if (i == 0) {
-                score += match_val //prefix match
-              } else {
-                score += 1
-              }  
+              score += match_val
             }
           }
-          emit(this, score/this._ngrams_weight)
+          emit(this, score)
         }
       EOS
       reduce = <<-EOS
@@ -128,7 +123,6 @@ module Mongoid::FullTextSearch
     end
     first, rest = ngrams.first, ngrams[1..-1]
     self._ngrams = Hash[rest.map { |ngram| [ngram, self.fulltext_infix_score] }]
-    self._ngrams_weight = field_values.inject(0) { |accum, item| accum += item.length }
     self._ngrams[first] = self.fulltext_prefix_score
     [first, rest]
   end
