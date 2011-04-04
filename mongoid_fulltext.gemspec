@@ -9,22 +9,28 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Aaron Windsor"]
-  s.date = %q{2011-03-31}
+  s.date = %q{2011-04-04}
   s.description = %q{Full-text search for the Mongoid ORM, using n-grams extracted from text}
   s.email = %q{aaron.windsor@gmail.com}
   s.extra_rdoc_files = [
-    "README.rdoc"
+    "LICENSE",
+    "README.md"
   ]
   s.files = [
     ".document",
     "Gemfile",
     "Gemfile.lock",
-    "README.rdoc",
+    "LICENSE",
+    "README.md",
     "Rakefile",
     "VERSION",
     "lib/mongoid_fulltext.rb",
-    "test/helper.rb",
-    "test/test_mongoid_fulltext.rb"
+    "mongoid_fulltext.gemspec",
+    "spec/models/basic_artwork.rb",
+    "spec/models/external_artist.rb",
+    "spec/models/external_artwork.rb",
+    "spec/mongoid/fulltext_spec.rb",
+    "spec/spec_helper.rb"
   ]
   s.homepage = %q{http://github.com/aaw/mongoid_fulltext}
   s.licenses = ["MIT"]
@@ -32,8 +38,11 @@ Gem::Specification.new do |s|
   s.rubygems_version = %q{1.3.7}
   s.summary = %q{Full-text search for the Mongoid ORM}
   s.test_files = [
-    "test/helper.rb",
-    "test/test_mongoid_fulltext.rb"
+    "spec/models/basic_artwork.rb",
+    "spec/models/external_artist.rb",
+    "spec/models/external_artwork.rb",
+    "spec/mongoid/fulltext_spec.rb",
+    "spec/spec_helper.rb"
   ]
 
   if s.respond_to? :specification_version then
@@ -41,21 +50,24 @@ Gem::Specification.new do |s|
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
-      s.add_development_dependency(%q<shoulda>, [">= 0"])
+      s.add_development_dependency(%q<mongoid>, ["= 2.0.0.rc.7"])
+      s.add_development_dependency(%q<database_cleaner>, ["~> 0.6.0"])
+      s.add_development_dependency(%q<rspec>, ["~> 2.5.0"])
       s.add_development_dependency(%q<bundler>, ["~> 1.0.0"])
       s.add_development_dependency(%q<jeweler>, ["~> 1.5.2"])
-      s.add_development_dependency(%q<rcov>, [">= 0"])
     else
-      s.add_dependency(%q<shoulda>, [">= 0"])
+      s.add_dependency(%q<mongoid>, ["= 2.0.0.rc.7"])
+      s.add_dependency(%q<database_cleaner>, ["~> 0.6.0"])
+      s.add_dependency(%q<rspec>, ["~> 2.5.0"])
       s.add_dependency(%q<bundler>, ["~> 1.0.0"])
       s.add_dependency(%q<jeweler>, ["~> 1.5.2"])
-      s.add_dependency(%q<rcov>, [">= 0"])
     end
   else
-    s.add_dependency(%q<shoulda>, [">= 0"])
+    s.add_dependency(%q<mongoid>, ["= 2.0.0.rc.7"])
+    s.add_dependency(%q<database_cleaner>, ["~> 0.6.0"])
+    s.add_dependency(%q<rspec>, ["~> 2.5.0"])
     s.add_dependency(%q<bundler>, ["~> 1.0.0"])
     s.add_dependency(%q<jeweler>, ["~> 1.5.2"])
-    s.add_dependency(%q<rcov>, [">= 0"])
   end
 end
 
