@@ -77,11 +77,7 @@ module Mongoid::FullTextSearch
       query = {'ngram' => {'$in' => ngrams }}
       map = <<-EOS
         function() {
-          for (key in this) {
-            if (key != '_id' && key != 'ngram') {
-              emit(key, this[key])
-            }
-          }
+          emit(this['document_id'], {'class': this['class'], 'score': this['score']})
         }
       EOS
       reduce = <<-EOS
@@ -131,13 +127,17 @@ module Mongoid::FullTextSearch
   def update_external_ngrams
     # remove existing ngrams from external index
     coll = collection.db.collection(self.external_index)
-    self._ngrams.each { |ngram| coll.update({'ngram' => ngram}, {'$unset' => {self._id => 1}})} if !self._ngrams.nil?
+    self._ngrams.each { |ngram| coll.remove({'ngram' => ngram, 'document_id' => self._id})} if !self._ngrams.nil?
     # update internal record so that we can remove these next time we update
     first, rest = update_internal_ngrams
     return if first.nil? and rest.nil?
     # insert new ngrams in external index
-    coll.insert({'ngram' => first, self._id => {'score' => self.fulltext_prefix_score, 'class' => self.class.name}})
-    rest.each { |ngram| coll.insert({'ngram' => ngram, self._id => {'score' => self.fulltext_infix_score, 'class' => self.class.name}})}
+    coll.insert({'ngram' => first, 'document_id' => self._id, 
+                  'score' => self.fulltext_prefix_score, 'class' => self.class.name})
+    rest.each do |ngram| 
+      coll.insert({'ngram' => ngram, 'document_id' => self._id, 
+                    'score' => self.fulltext_infix_score, 'class' => self.class.name})
+    end
   end
   
 end
