@@ -39,8 +39,8 @@ module Mongoid::FullTextSearch
       end
     end
 
-    def fulltext_search_internal(query, max_results)
-      ngrams = all_ngrams(query)
+    def fulltext_search_internal(query_string, max_results)
+      ngrams = all_ngrams(query_string)
       return [] if ngrams.empty?
       query = {'$or' => ngrams.map{ |ngram| {'_ngrams.%s' % ngram => {'$gte' => 0 }}}}
       map = <<-EOS
@@ -67,12 +67,12 @@ module Mongoid::FullTextSearch
       options = {:scope => {:ngrams => ngrams }, :query => query}
       results = collection.map_reduce(map, reduce, options).find().sort(['value',-1])
       results = results.limit(max_results) if !max_results.nil?
-      results.map{ |result| self.instantiate(result['_id']) }
+      score_threshold = (query_string.length > self.ngram_width) ? 1 : 0
+      results.find_all{ |result| result['value'] > score_threshold }.map{ |result| self.instantiate(result['_id']) }
     end
 
-    def fulltext_search_external(query, max_results)
-      orig_query = query
-      ngrams = all_ngrams(query)
+    def fulltext_search_external(query_string, max_results)
+      ngrams = all_ngrams(query_string)
       return [] if ngrams.empty?
       query = {'ngram' => {'$in' => ngrams }}
       map = <<-EOS
@@ -93,7 +93,9 @@ module Mongoid::FullTextSearch
       coll = collection.db.collection(self.external_index)
       results = coll.map_reduce(map, reduce, options).find().sort(['value.score',-1])
       results = results.limit(max_results) if !max_results.nil?
-      results.map{ |result| Object::const_get(result['value']['class']).find(result['_id']) }
+      score_threshold = (query_string.length > self.ngram_width) ? 1 : 0
+      results.find_all{ |result| result['value']['score'] > score_threshold }\
+             .map{ |result| Object::const_get(result['value']['class']).find(result['_id']) }
     end
     
     def all_ngrams(str, bound_number_returned=true)

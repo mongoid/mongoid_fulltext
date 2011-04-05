@@ -46,6 +46,14 @@ module Mongoid
         BasicArtwork.fulltext_search('c!!!oo').first.should == cookies
       end
 
+      it "returns ngram matches with score = 1 only if the query is the length of the ngram" do
+        BasicArtwork.fulltext_search('coo').first.should == cookies # score = 1 but length = ngram_width
+        BasicArtwork.fulltext_search('coox').first.should == cookies # prefix match, score > 1
+        BasicArtwork.fulltext_search('cook').first.should == cookies # score > 1
+        BasicArtwork.fulltext_search('ookx').empty?.should be_true # score = 1
+        BasicArtwork.fulltext_search('ookxkie').first.should == cookies # score > 1
+      end
+
     end
     context "with a basic external index" do
       let!(:pablo_picasso)       { ExternalArtist.create(:full_name => 'Pablo Picasso') }
@@ -118,6 +126,13 @@ module Mongoid
       it "returns results for a single model when passed the :use_internal_index flag" do
         ExternalArtist.fulltext_search('picasso warhol', :use_internal_index => true).should == [pablo_picasso, andy_warhol]
         ExternalArtwork.fulltext_search('picasso warhol', :use_internal_index => true).should == [warhol, portrait_of_picasso]
+      end
+
+      it "returns ngram matches with score = 1 only if the query is the length of the ngram" do
+        ExternalArtwork.fulltext_search('ndy').first.should == andy_warhol # score = 1 but length = ngram_width
+        ExternalArtwork.fulltext_search('xndy').empty?.should be_true # score = 1
+        ExternalArtwork.fulltext_search('andx').first.should == andy_warhol # score > 1, since it's a prefix match
+        ExternalArtwork.fulltext_search('xndy w').first.should == andy_warhol # score > 1
       end
 
     end
