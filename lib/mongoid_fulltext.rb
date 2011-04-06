@@ -64,11 +64,15 @@ module Mongoid::FullTextSearch
           return(score)
         }
       EOS
-      options = {:scope => {:ngrams => ngrams }, :query => query}
-      results = collection.map_reduce(map, reduce, options).find().sort(['value',-1])
+      options = {:scope => {:ngrams => ngrams }, :query => query, :raw => true}
+      result_collection = collection.map_reduce(map, reduce, options)['result']
+      results = collection.db.collection(result_collection).find.sort(['value',-1])
       results = results.limit(max_results) if !max_results.nil?
       score_threshold = (query_string.length > self.ngram_width) ? 1 : 0
-      results.find_all{ |result| result['value'] > score_threshold }.map{ |result| self.instantiate(result['_id']) }
+      models = results.find_all{ |result| result['value'] > score_threshold }\
+                      .map{ |result| self.instantiate(result['_id']) }
+      collection.db.collection(result_collection).drop
+      models
     end
 
     def fulltext_search_external(query_string, max_results)
@@ -89,13 +93,16 @@ module Mongoid::FullTextSearch
           return({'class': values[0]['class'], 'score': score})
         }
       EOS
-      options = {:scope => {:ngrams => ngrams }, :query => query}
+      options = {:scope => {:ngrams => ngrams }, :query => query, :raw => true}
       coll = collection.db.collection(self.external_index)
-      results = coll.map_reduce(map, reduce, options).find().sort(['value.score',-1])
+      result_collection = coll.map_reduce(map, reduce, options)['result']
+      results = collection.db.collection(result_collection).find.sort(['value.score',-1])
       results = results.limit(max_results) if !max_results.nil?
       score_threshold = (query_string.length > self.ngram_width) ? 1 : 0
-      results.find_all{ |result| result['value']['score'] > score_threshold }\
-             .map{ |result| Object::const_get(result['value']['class']).find(result['_id']) }
+      models = results.find_all{ |result| result['value']['score'] > score_threshold }\
+                      .map { |result| Object::const_get(result['value']['class']).find(result['_id']) }
+      collection.db.collection(result_collection).drop
+      models
     end
     
     def all_ngrams(str, bound_number_returned=true)
