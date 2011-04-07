@@ -8,6 +8,7 @@ module Mongoid
       let!(:flowers)     { BasicArtwork.create(:title => 'Flowers') }
       let!(:lowered)     { BasicArtwork.create(:title => 'Lowered') }
       let!(:cookies)     { BasicArtwork.create(:title => 'Cookies') }
+      let!(:empty)       { BasicArtwork.create(:title => '') }
 
       it "returns exact matches" do
         BasicArtwork.fulltext_search('Flower Myth', :max_results => 1).first.should == flower_myth
@@ -67,6 +68,7 @@ module Mongoid
       let!(:portrait_of_picasso) { ExternalArtwork.create(:title => 'Portrait of Picasso') }
       let!(:andy_warhol)         { ExternalArtist.create(:full_name => 'Andy Warhol') }
       let!(:warhol)              { ExternalArtwork.create(:title => 'Warhol') }
+      let!(:empty)               { ExternalArtwork.create(:title => '') }
 
       it "returns results of different types from the same query" do
         results = ExternalArtwork.fulltext_search('picasso', :max_results => 2).map{ |result| result }

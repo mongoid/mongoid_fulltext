@@ -90,7 +90,7 @@ module Mongoid::FullTextSearch
       EOS
       reduce = <<-EOS
         function(key, values) {
-          score = 0
+          score = 0.0
           for (i in values) {
             score += values[i]['score']
           }
@@ -137,7 +137,7 @@ module Mongoid::FullTextSearch
   def update_external_ngrams
     # remove existing ngrams from external index
     coll = collection.db.collection(self.external_index)
-    self._ngrams.each { |ngram| coll.remove({'ngram' => ngram, 'document_id' => self._id})} if !self._ngrams.nil?
+    coll.remove({'document_id' => self._id})
     # update internal record so that we can remove these next time we update
     ngrams = update_internal_ngrams
     return if ngrams.empty?

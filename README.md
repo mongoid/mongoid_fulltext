@@ -35,14 +35,14 @@ pass the `:max_results` parameter:
 
 By default, index terms are stored with each model instance in an embedded hash. But you
 can also use an 'external' collection to store the index data by providing collection name
-as the `external_collection` parameter:
+as the `external_index` parameter:
 
     class Artwork
       include Mongoid::Document
       include Mongoid::FullTextSearch
 
       field :title
-      fulltext_search_in :title, :external_collection => 'artwork_fulltext_index'
+      fulltext_search_in :title, :external_index => 'artwork_fulltext_index'
     end
 
 Using a separate collection for the index can speed up your queries dramatically, but there's 
@@ -55,14 +55,14 @@ a single result set. For example, if both the `Artist` model and the `Artwork` m
 indexed for full-text search, then to get results from both, you'd have to call 
 `Artist.fulltext_search` and `Artwork.fulltext_search` and combine the results yourself. If
 your intention is instead to get the top k results from both Artists and Artworks, you can
-merge both into a single index by using the same `:external_collection` parameter:
+merge both into a single index by using the same `:external_index` parameter:
 
     class Artwork
       include Mongoid::Document
       include Mongoid::FullTextSearch
 
       field :title
-      fulltext_search_in :title, :external_collection => 'artwork_and_artists'
+      fulltext_search_in :title, :external_index => 'artwork_and_artists'
     end
 
     class Artist
@@ -70,7 +70,7 @@ merge both into a single index by using the same `:external_collection` paramete
       include Mongoid::FullTextSearch
 
       field :name
-      fulltext_search_in :name, :external_collection => 'artwork_and_artists'
+      fulltext_search_in :name, :external_index => 'artwork_and_artists'
     end
 
 Now that these two models share the same external index collection, we can search them both through
