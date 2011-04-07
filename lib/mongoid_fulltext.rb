@@ -14,13 +14,16 @@ module Mongoid::FullTextSearch
         hash_args = args.pop
         self.external_index = hash_args[:external_index]
       end
+      # The alphabet is a string containing every symbol we want to index
       alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789 '
+      # A separator is anything that should indicate a split between two words
       separators = ' '
       self.ngram_width = 3
       self.max_ngrams_to_search = 6
-      self.ngram_fields = args
       self.fulltext_prefix_score = 1
       self.fulltext_infix_score = 1
+
+      self.ngram_fields = args
       self.ngram_alphabet = Hash[alphabet.split('').map{ |ch| [ch,ch] }]
       self.word_separators = Hash[separators.split('').map{ |ch| [ch,ch] }]
       field :_ngrams, :type => Hash
@@ -45,8 +48,7 @@ module Mongoid::FullTextSearch
     def fulltext_search_internal(query_string, max_results)
       ngrams = all_ngrams(query_string)
       return [] if ngrams.empty?
-      query = {'$or' => ngrams.map{ |result| {'_ngrams.%s' % result[:ngram] => {'$gte' => 0 }}}}
-      ngrams = Hash[ngrams.map { |ngram| [ngram[:ngram], ngram[:score]] }]
+      query = {'$or' => ngrams.map{ |(ngram, score)| {'_ngrams.%s' % ngram => {'$gte' => 0 }}}}
       map = <<-EOS
         function() {
           var score = 0;
@@ -80,8 +82,7 @@ module Mongoid::FullTextSearch
     def fulltext_search_external(query_string, max_results)
       ngrams = all_ngrams(query_string)
       return [] if ngrams.empty?
-      query = {'ngram' => {'$in' => ngrams.map{ |result| result[:ngram] }}}
-      ngrams = Hash[ngrams.map { |ngram| [ngram[:ngram], ngram[:score]] }]
+      query = {'ngram' => {'$in' => ngrams.keys}}
       map = <<-EOS
         function() {
           emit(this['document_id'], {'class': this['class'], 'score': this['score']*ngrams[this['ngram']] })
@@ -114,14 +115,14 @@ module Mongoid::FullTextSearch
       else
         step_size = 1
       end
-      (0..filtered_str.length - self.ngram_width).step(step_size).map do |i|
+      Hash[(0..filtered_str.length - self.ngram_width).step(step_size).map do |i|
         if i == 0 or self.word_separators.has_key?(filtered_str[i-1]) # if the ngram is a prefix
           score = self.fulltext_prefix_score
         else
           score = self.fulltext_infix_score/Float(filtered_str.length)
         end
-        { :ngram => filtered_str[i..i+self.ngram_width-1], :score => score }
-      end
+        [filtered_str[i..i+self.ngram_width-1], score]
+      end]
     end
 
   end
@@ -130,13 +131,7 @@ module Mongoid::FullTextSearch
 
   def update_internal_ngrams
     field_values = self.ngram_fields.map { |field| self.send(field) }
-    ngrams = field_values.map { |value| self.class.all_ngrams(value, false) }.flatten
-    if ngrams.empty?
-      self._ngrams = {}
-      return nil
-    end
-    self._ngrams = Hash[ngrams.map { |ngram| [ngram[:ngram], ngram[:score]] }]
-    ngrams
+    self._ngrams = field_values.inject({}) { |accum, item| accum.update(self.class.all_ngrams(item, false))}
   end
 
   def update_external_ngrams
@@ -145,11 +140,10 @@ module Mongoid::FullTextSearch
     self._ngrams.each { |ngram| coll.remove({'ngram' => ngram, 'document_id' => self._id})} if !self._ngrams.nil?
     # update internal record so that we can remove these next time we update
     ngrams = update_internal_ngrams
-    return if ngrams.nil?
+    return if ngrams.empty?
     # insert new ngrams in external index
-    ngrams.each do |ngram|
-      coll.insert({'ngram' => ngram[:ngram], 'document_id' => self._id,
-                    'score' => ngram[:score], 'class' => self.class.name})
+    ngrams.each_pair do |ngram, score|
+      coll.insert({'ngram' => ngram, 'document_id' => self._id, 'score' => score, 'class' => self.class.name})
     end
   end
   
