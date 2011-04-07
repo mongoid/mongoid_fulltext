@@ -108,7 +108,7 @@ module Mongoid::FullTextSearch
     end
     
     def all_ngrams(str, bound_number_returned=true)
-      return [] if str.nil? or str.length < self.ngram_width
+      return {} if str.nil? or str.length < self.ngram_width
       filtered_str = str.downcase.split('').map{ |ch| self.ngram_alphabet[ch] }.find_all{ |ch| !ch.nil? }.join('')
       if bound_number_returned
         step_size = [((filtered_str.length - self.ngram_width).to_f / self.max_ngrams_to_search).ceil, 1].max
