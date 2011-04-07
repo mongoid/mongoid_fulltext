@@ -58,7 +58,7 @@ module Mongoid::FullTextSearch
               score += match_val * ngrams[ngram]
             }
           }
-          emit(this, score)
+          emit(this['_id'], score)
         }
       EOS
       reduce = <<-EOS
@@ -74,7 +74,7 @@ module Mongoid::FullTextSearch
       result_collection = collection.map_reduce(map, reduce, options)['result']
       results = collection.db.collection(result_collection).find.sort(['value',-1])
       results = results.limit(max_results) if !max_results.nil?
-      models = results.map{ |result| self.instantiate(result['_id']) }
+      models = results.map{ |result| self.find(result['_id']) }
       collection.db.collection(result_collection).drop
       models
     end
