@@ -63,6 +63,25 @@ module Mongoid
       end
 
     end
+    context "with default settings" do
+      
+      let!(:abc)       { BasicArtwork.create(:title => "abc") }
+      let!(:abcd)      { BasicArtwork.create(:title => "abcd") }
+      let!(:abcde)     { BasicArtwork.create(:title => "abcde") }
+      let!(:abcdef)    { BasicArtwork.create(:title => "abcdef") }
+      let!(:abcdefg)   { BasicArtwork.create(:title => "abcdefg") }
+      let!(:abcdefgh)  { BasicArtwork.create(:title => "abcdefgh") }
+      
+      it "returns exact matches from a list of similar prefixes" do
+        BasicArtwork.fulltext_search('abc').first.should == abc
+        BasicArtwork.fulltext_search('abcd').first.should == abcd
+        BasicArtwork.fulltext_search('abcde').first.should == abcde
+        BasicArtwork.fulltext_search('abcdef').first.should == abcdef
+        BasicArtwork.fulltext_search('abcdefg').first.should == abcdefg
+        BasicArtwork.fulltext_search('abcdefgh').first.should == abcdefgh
+      end
+
+    end
     context "with a basic external index" do
       let!(:pablo_picasso)       { ExternalArtist.create(:full_name => 'Pablo Picasso') }
       let!(:portrait_of_picasso) { ExternalArtwork.create(:title => 'Portrait of Picasso') }
@@ -151,6 +170,25 @@ module Mongoid
         ExternalArtwork.fulltext_search('poppie').first.should == david_poppie
         ExternalArtwork.fulltext_search('pop cult').first.should == pop_culture
         ExternalArtwork.fulltext_search('pop', :max_results => 5)[4].should == kung_fu_lollipop
+      end
+
+    end
+    context "with a basic external index" do
+      
+      let!(:abc)       { ExternalArtwork.create(:title => "abc") }
+      let!(:abcd)      { ExternalArtwork.create(:title => "abcd") }
+      let!(:abcde)     { ExternalArtwork.create(:title => "abcde") }
+      let!(:abcdef)    { ExternalArtwork.create(:title => "abcdef") }
+      let!(:abcdefg)   { ExternalArtwork.create(:title => "abcdefg") }
+      let!(:abcdefgh)  { ExternalArtwork.create(:title => "abcdefgh") }
+      
+      it "returns exact matches from a list of similar prefixes" do
+        ExternalArtwork.fulltext_search('abc').first.should == abc
+        ExternalArtwork.fulltext_search('abcd').first.should == abcd
+        ExternalArtwork.fulltext_search('abcde').first.should == abcde
+        ExternalArtwork.fulltext_search('abcdef').first.should == abcdef
+        ExternalArtwork.fulltext_search('abcdefg').first.should == abcdefg
+        ExternalArtwork.fulltext_search('abcdefgh').first.should == abcdefgh
       end
 
     end

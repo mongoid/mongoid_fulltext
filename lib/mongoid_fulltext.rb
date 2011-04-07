@@ -14,14 +14,20 @@ module Mongoid::FullTextSearch
         hash_args = args.pop
         self.external_index = hash_args[:external_index]
       end
+
       # The alphabet is a string containing every symbol we want to index
       alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789 '
       # A separator is anything that should indicate a split between two words
       separators = ' '
+      # The n-gram width is the "n" in n-gram: the number of consecutive characters to consider
       self.ngram_width = 3
+      # max_ngrams_to_search is a ceiling on the number of n-grams to break a search string into
       self.max_ngrams_to_search = 6
+      
+      # These scores can be tweaked to change how mongoid_fulltext ranks matches, making it
+      # prefer prefix matches over infix matches and vise-versa
       self.fulltext_prefix_score = 1
-      self.fulltext_infix_score = 1
+      self.fulltext_infix_score = 2
 
       self.ngram_fields = args
       self.ngram_alphabet = Hash[alphabet.split('').map{ |ch| [ch,ch] }]
@@ -117,9 +123,9 @@ module Mongoid::FullTextSearch
       end
       Hash[(0..filtered_str.length - self.ngram_width).step(step_size).map do |i|
         if i == 0 or self.word_separators.has_key?(filtered_str[i-1]) # if the ngram is a prefix
-          score = self.fulltext_prefix_score
+          score = Math.sqrt(self.fulltext_prefix_score + 1.0/filtered_str.length)
         else
-          score = self.fulltext_infix_score/Float(filtered_str.length)
+          score = Math.sqrt(self.fulltext_infix_score/Float(filtered_str.length))
         end
         [filtered_str[i..i+self.ngram_width-1], score]
       end]
