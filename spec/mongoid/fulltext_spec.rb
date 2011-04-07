@@ -8,7 +8,7 @@ module Mongoid
       let!(:flowers)     { BasicArtwork.create(:title => 'Flowers') }
       let!(:lowered)     { BasicArtwork.create(:title => 'Lowered') }
       let!(:cookies)     { BasicArtwork.create(:title => 'Cookies') }
-      
+
       it "returns exact matches" do
         BasicArtwork.fulltext_search('Flower Myth', :max_results => 1).first.should == flower_myth
         BasicArtwork.fulltext_search('Flowers', :max_results => 1).first.should == flowers
@@ -45,13 +45,20 @@ module Mongoid
         BasicArtwork.fulltext_search('coo').first.should == cookies
         BasicArtwork.fulltext_search('c!!!oo').first.should == cookies
       end
+    end
+    context "with default settings" do
 
-      it "returns ngram matches with score = 1 only if the query is the length of the ngram" do
-        BasicArtwork.fulltext_search('coo').first.should == cookies # score = 1 but length = ngram_width
-        BasicArtwork.fulltext_search('coox').first.should == cookies # prefix match, score > 1
-        BasicArtwork.fulltext_search('cook').first.should == cookies # score > 1
-        BasicArtwork.fulltext_search('ookx').empty?.should be_true # score = 1
-        BasicArtwork.fulltext_search('ookxkie').first.should == cookies # score > 1
+      let!(:yellow)             { BasicArtwork.create(:title => 'Yellow') }
+      let!(:yellow_leaves_2)    { BasicArtwork.create(:title => 'Yellow Leaves 2') }
+      let!(:yellow_leaves_3)    { BasicArtwork.create(:title => 'Yellow Leaves 3') }
+      let!(:yellow_leaves_20)   { BasicArtwork.create(:title => 'Yellow Leaves 20') }
+      let!(:yellow_cup)         { BasicArtwork.create(:title => 'Yellow Cup') }
+
+      it "prefers the best prefix that matches a given string" do
+        BasicArtwork.fulltext_search('yellow').first.should == yellow
+        BasicArtwork.fulltext_search('yellow leaves', :max_results => 3).sort_by!{ |x| x.title }.should == \
+          [yellow_leaves_2, yellow_leaves_3, yellow_leaves_20].sort_by!{ |x| x.title }
+        BasicArtwork.fulltext_search('yellow cup').first.should == yellow_cup
       end
 
     end
@@ -107,8 +114,8 @@ module Mongoid
       end
 
       it "prefers prefix matches" do
-        ExternalArtist.fulltext_search('Pablo Warhol').first.should == pablo_picasso
-        ExternalArtist.fulltext_search('Andy Picasso').first.should == andy_warhol
+        ExternalArtist.fulltext_search('PabloWarhol').first.should == pablo_picasso
+        ExternalArtist.fulltext_search('AndyPicasso').first.should == andy_warhol
       end
 
       it "returns an empty result set for an empty query" do
@@ -127,12 +134,21 @@ module Mongoid
         ExternalArtist.fulltext_search('picasso warhol', :use_internal_index => true).should == [pablo_picasso, andy_warhol]
         ExternalArtwork.fulltext_search('picasso warhol', :use_internal_index => true).should == [warhol, portrait_of_picasso]
       end
+      
+    end
+    context "with a basic external index" do
 
-      it "returns ngram matches with score = 1 only if the query is the length of the ngram" do
-        ExternalArtwork.fulltext_search('ndy').first.should == andy_warhol # score = 1 but length = ngram_width
-        ExternalArtwork.fulltext_search('xndy').empty?.should be_true # score = 1
-        ExternalArtwork.fulltext_search('andx').first.should == andy_warhol # score > 1, since it's a prefix match
-        ExternalArtwork.fulltext_search('xndy w').first.should == andy_warhol # score > 1
+      let!(:pop)                { ExternalArtwork.create(:title => 'Pop') }
+      let!(:pop_culture)        { ExternalArtwork.create(:title => 'Pop Culture') }
+      let!(:contemporary_pop)   { ExternalArtwork.create(:title => 'Contemporary Pop') }
+      let!(:david_poppie)       { ExternalArtist.create(:full_name => 'David Poppie') }
+      let!(:kung_fu_lollipop)   { ExternalArtwork.create(:title => 'Kung-Fu Lollipop') }
+
+      it "prefers the best prefix that matches a given string" do
+        ExternalArtwork.fulltext_search('pop').first.should == pop
+        ExternalArtwork.fulltext_search('poppie').first.should == david_poppie
+        ExternalArtwork.fulltext_search('pop cult').first.should == pop_culture
+        ExternalArtwork.fulltext_search('pop', :max_results => 5)[4].should == kung_fu_lollipop
       end
 
     end
