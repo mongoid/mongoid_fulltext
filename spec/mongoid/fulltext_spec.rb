@@ -159,6 +159,20 @@ module Mongoid
     end
     context "with a basic external index" do
 
+      let!(:andy_warhol)         { ExternalArtist.create(:full_name => 'Andy Warhol') }
+      let!(:warhol)              { ExternalArtwork.create(:title => 'Warhol') }
+
+      it "doesn't blow up if garbage is in the index collection" do
+        ExternalArtist.fulltext_search('warhol').should == [warhol, andy_warhol]
+        index_collection = ExternalArtist.collection.db.collection(ExternalArtist.external_index)
+        index_collection.update({'document_id' => warhol.id}, {'$set' => { 'document_id' => BSON::ObjectId.new }}, :multi => true)
+        # We should no longer be able to find warhol, but that shouldn't keep it from returning results
+        ExternalArtist.fulltext_search('warhol').should == [andy_warhol]
+      end
+      
+    end
+    context "with a basic external index" do
+
       let!(:pop)                { ExternalArtwork.create(:title => 'Pop') }
       let!(:pop_culture)        { ExternalArtwork.create(:title => 'Pop Culture') }
       let!(:contemporary_pop)   { ExternalArtwork.create(:title => 'Contemporary Pop') }
@@ -193,6 +207,7 @@ module Mongoid
 
     end
     context "with a basic external index" do
+
       it "cleans up item from the index after they're destroyed" do
         foobar = ExternalArtwork.create(:title => "foobar")
         barfoo = ExternalArtwork.create(:title => "barfoo")
@@ -202,6 +217,7 @@ module Mongoid
         barfoo.destroy
         ExternalArtwork.fulltext_search('foobar').should == []
       end
+
     end
     context "with an external index and no fields provided to index" do
 
@@ -212,6 +228,7 @@ module Mongoid
         ExternalArtworkNoFieldsSupplied.fulltext_search('poppie').first.should == big_bang
         ExternalArtworkNoFieldsSupplied.fulltext_search('2009').first.should == big_bang
       end
+
     end
   end
 end

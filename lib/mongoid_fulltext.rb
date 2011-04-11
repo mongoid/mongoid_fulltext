@@ -110,7 +110,8 @@ module Mongoid::FullTextSearch
       result_collection = coll.map_reduce(map, reduce, options)['result']
       results = collection.db.collection(result_collection).find.sort(['value.score',-1])
       results = results.limit(max_results) if !max_results.nil?
-      models = results.map { |result| Object::const_get(result['value']['class']).find(result['_id']) }
+      models = results.map { |result| Object::const_get(result['value']['class']).find(:first, :conditions => {:id => result['_id']}) }\
+                      .find_all { |result| !result.nil? }
       collection.db.collection(result_collection).drop
       models
     end
