@@ -192,5 +192,16 @@ module Mongoid
       end
 
     end
+    context "with a basic external index" do
+      it "cleans up item from the index after they're destroyed" do
+        foobar = ExternalArtwork.create(:title => "foobar")
+        barfoo = ExternalArtwork.create(:title => "barfoo")
+        ExternalArtwork.fulltext_search('foobar').should == [foobar, barfoo]
+        foobar.destroy
+        ExternalArtwork.fulltext_search('foobar').should == [barfoo]
+        barfoo.destroy
+        ExternalArtwork.fulltext_search('foobar').should == []
+      end
+    end
   end
 end

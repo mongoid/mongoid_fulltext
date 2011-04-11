@@ -40,6 +40,7 @@ module Mongoid::FullTextSearch
         coll = collection.db.collection(self.external_index)
         coll.ensure_index([['ngram', Mongo::ASCENDING]])
         before_save :update_external_ngrams
+        before_destroy :remove_external_ngrams
       end
     end
 
@@ -151,6 +152,11 @@ module Mongoid::FullTextSearch
     ngrams.each_pair do |ngram, score|
       coll.insert({'ngram' => ngram, 'document_id' => self._id, 'score' => score, 'class' => self.class.name})
     end
+  end
+
+  def remove_external_ngrams
+    coll = collection.db.collection(self.external_index)
+    coll.remove({'document_id' => self._id})
   end
   
 end
