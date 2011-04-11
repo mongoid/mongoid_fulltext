@@ -33,6 +33,23 @@ pass the `:max_results` parameter:
 
     Artist.fulltext_search("vince vangogh", :max_results => 5)
 
+If you don't specify a field to index, the default is the result of `to_s` called on the object.
+The following definition will index the first and last name of an artist:
+
+    class Artist
+      include Mongoid::Document
+      include Mongoid::FullTextSearch
+
+      field :first_name
+      field :last_name
+
+      def to_s
+        '%s %s' % [first_name, last_name]
+      end
+
+      fulltext_search_in
+    end 
+
 By default, index terms are stored with each model instance in an embedded hash. But you
 can also use an 'external' collection to store the index data by providing collection name
 as the `external_index` parameter:

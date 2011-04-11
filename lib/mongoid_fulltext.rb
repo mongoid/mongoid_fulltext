@@ -29,6 +29,7 @@ module Mongoid::FullTextSearch
       self.fulltext_prefix_score = 1
       self.fulltext_infix_score = 2
 
+      args = [:to_s] if args.empty?
       self.ngram_fields = args
       self.ngram_alphabet = Hash[alphabet.split('').map{ |ch| [ch,ch] }]
       self.word_separators = Hash[separators.split('').map{ |ch| [ch,ch] }]

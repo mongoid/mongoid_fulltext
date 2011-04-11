@@ -203,5 +203,15 @@ module Mongoid
         ExternalArtwork.fulltext_search('foobar').should == []
       end
     end
+    context "with an external index and no fields provided to index" do
+
+      let!(:big_bang) { ExternalArtworkNoFieldsSupplied.create(:title => 'Big Bang', :artist => 'David Poppie', :year => '2009') }
+
+      it "indexes the string returned by to_s" do
+        ExternalArtworkNoFieldsSupplied.fulltext_search('big bang').first.should == big_bang
+        ExternalArtworkNoFieldsSupplied.fulltext_search('poppie').first.should == big_bang
+        ExternalArtworkNoFieldsSupplied.fulltext_search('2009').first.should == big_bang
+      end
+    end
   end
 end
