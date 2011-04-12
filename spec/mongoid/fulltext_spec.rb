@@ -243,5 +243,17 @@ module Mongoid
       end
 
     end
+    context "with multiple external indexes" do
+      
+      let!(:pop)                { MultiExternalArtwork.create(:title => 'Pop') }
+      let!(:pop_culture)        { MultiExternalArtwork.create(:title => 'Pop Culture') }
+      let!(:contemporary_pop)   { MultiExternalArtwork.create(:title => 'Contemporary Pop') }
+      let!(:kung_fu_lollipop)   { MultiExternalArtwork.create(:title => 'Kung-Fu Lollipop') }
+      
+      it "allows searches to hit a particular index" do
+
+      end
+
+    end
   end
 end
