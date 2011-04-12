@@ -4,30 +4,32 @@ module Mongoid::FullTextSearch
   included do
     cattr_accessor :ngram_fields, :ngram_width, :ngram_alphabet, :max_ngrams_to_search, \
                    :fulltext_prefix_score, :fulltext_infix_score, :external_index, \
-                   :word_separators
+                   :word_separators, :apply_prefix_scoring_to_all_words
   end
 
   module ClassMethods
 
     def fulltext_search_in(*args)
-      if args.last.is_a?(Hash)
-        hash_args = args.pop
-        self.external_index = hash_args[:external_index]
+      options = args.last.is_a?(Hash) ? args.pop : {}
+      def get_option(options, key, default=nil)
+        options.has_key?(key) ? options[key] : default
       end
 
+      self.external_index = get_option(options, :external_index)
       # The alphabet is a string containing every symbol we want to index
-      alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789 '
+      alphabet = get_option(options, :alphabet, 'abcdefghijklmnopqrstuvwxyz0123456789 ')
       # A separator is anything that should indicate a split between two words
-      separators = ' '
+      separators = get_option(options, :separators, ' ')
       # The n-gram width is the "n" in n-gram: the number of consecutive characters to consider
-      self.ngram_width = 3
+      self.ngram_width = get_option(options, :ngram_width, 3)
       # max_ngrams_to_search is a ceiling on the number of n-grams to break a search string into
-      self.max_ngrams_to_search = 6
+      self.max_ngrams_to_search = get_option(options, :max_ngrams_to_search, 6)
       
       # These scores can be tweaked to change how mongoid_fulltext ranks matches, making it
-      # prefer prefix matches over infix matches and vise-versa
-      self.fulltext_prefix_score = 1
-      self.fulltext_infix_score = 2
+      # prefer prefix matches over infix matches and vise-versa.
+      self.fulltext_prefix_score = get_option(options, :fulltext_prefix_score, 1)
+      self.fulltext_infix_score = get_option(options, :fulltext_infix_score, 2)
+      self.apply_prefix_scoring_to_all_words = get_option(options, :apply_prefix_scoring_to_all_words, true)
 
       args = [:to_s] if args.empty?
       self.ngram_fields = args
@@ -125,7 +127,8 @@ module Mongoid::FullTextSearch
         step_size = 1
       end
       Hash[(0..filtered_str.length - self.ngram_width).step(step_size).map do |i|
-        if i == 0 or self.word_separators.has_key?(filtered_str[i-1]) # if the ngram is a prefix
+        if i == 0 or (self.apply_prefix_scoring_to_all_words and \
+                      self.word_separators.has_key?(filtered_str[i-1]))
           score = Math.sqrt(self.fulltext_prefix_score + 1.0/filtered_str.length)
         else
           score = Math.sqrt(self.fulltext_infix_score/Float(filtered_str.length))
@@ -160,5 +163,5 @@ module Mongoid::FullTextSearch
     coll = collection.db.collection(self.external_index)
     coll.remove({'document_id' => self._id})
   end
-  
+
 end

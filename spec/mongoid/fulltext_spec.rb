@@ -2,6 +2,19 @@ require 'spec_helper'
 
 module Mongoid
   describe FullTextSearch do
+    context "with an several config options defined" do
+
+      let!(:abcdef) { AdvancedArtwork.create(:title => 'abcdefg hijklmn') }
+
+      it "should recognize all options" do
+        # AdvancedArtwork is defined with an ngram_width of 4 and a different alphabet (abcdefg)
+        AdvancedArtwork.fulltext_search('abc').should == []
+        AdvancedArtwork.fulltext_search('abcd').first.should == abcdef
+        AdvancedArtwork.fulltext_search('defg').first.should == abcdef
+        AdvancedArtwork.fulltext_search('hijklmn').should == []
+      end
+
+    end
     context "with default settings" do
       
       let!(:flower_myth) { BasicArtwork.create(:title => 'Flower Myth') }
