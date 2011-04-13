@@ -5,6 +5,8 @@ module Mongoid::FullTextSearch
     cattr_accessor :mongoid_fulltext_config
   end
 
+  class UnspecifiedIndexError < StandardError; end
+
   module ClassMethods
 
     def fulltext_search_in(*args)
@@ -39,7 +41,10 @@ module Mongoid::FullTextSearch
 
     def fulltext_search(query_string, options={})
       max_results = options.has_key?(:max_results) ? options[:max_results] : 10
-      # if self.mongoid_fulltext_config.count > 1 and !options.has_key?(:index) raise an exception
+      if self.mongoid_fulltext_config.count > 1 and !options.has_key?(:index) 
+        error_message = '%s is indexed by multiple full-text indexes. You must specify one by passing an :index_name parameter'
+        raise UnspecifiedIndexError, error_message % self.name, caller
+      end
       index_name = options.has_key?(:index) ? options[:index] : self.mongoid_fulltext_config.keys.first
       ngrams = all_ngrams(query_string, self.mongoid_fulltext_config[index_name])
       return [] if ngrams.empty?

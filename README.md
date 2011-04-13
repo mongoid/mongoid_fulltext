@@ -1,7 +1,7 @@
 Mongoid Fulltext Search
 =======================
 
-Full-text search using n-gram matching for the Mongoid ODM. 
+Full-text search using n-gram matching for the Mongoid ODM. Works for MongoDB 1.6, support for 1.8 coming soon.
 
 Some examples:
 --------------
@@ -27,9 +27,21 @@ you can call:
 
     Artist.fulltext_search("vince vangogh")
 
-which will return the best matches for the search string as a Mongoid::Criteria. Most likely,
-Vincent van Gogh will be included in the results. To restrict the number of results returned,
-pass the `:max_results` parameter:
+which will return an array of the Artist instances that best match the search string. Most likely,
+Vincent van Gogh will be included in the results. You can index multiple fields with the same
+index, so we can get the same effect of our Artist index above using:
+
+    class Artist
+      include Mongoid::Document
+      include Mongoid::FullTextSearch
+
+      field :first_name
+      field :last_name
+
+      fulltext_search_in :first_name, :last_name
+    end
+
+To restrict the number of results returned, pass the `:max_results` parameter to `fulltext_search`:
 
     Artist.fulltext_search("vince vangogh", :max_results => 5)
 
@@ -50,22 +62,44 @@ The following definition will index the first and last name of an artist:
       fulltext_search_in
     end 
 
-By default, index terms are stored with each model instance in an embedded hash. But you
-can also use an 'external' collection to store the index data by providing collection name
-as the `external_index` parameter:
+The full-text index is stored in a separate MongoDB collection in the same database as the
+models you're indexing. By default, the name of this collection is generated for you. Above,
+a collection named something like `mongoid_fulltext.index_artist_0` will be created to
+hold the index data. You can override this naming and provide your own collection name with 
+the :index_name parameter:
 
     class Artwork
       include Mongoid::Document
       include Mongoid::FullTextSearch
 
       field :title
-      fulltext_search_in :title, :external_index => 'artwork_fulltext_index'
+      fulltext_search_in :title, :index_name => 'mongoid_fulltext.foobar'
     end
 
-Using a separate collection for the index can speed up your queries dramatically, but there's 
-a little more overhead when models are modified or deleted. The string specifying the index 
-collection must be a valid MongoDB collection name; it will correspond directly to a collection 
-in the same database as these models that's used to store the index data.
+You can also create multiple indexes on a single model, in which case you'll want to
+provide index names:
+
+    class Artwork
+      include Mongoid::Document
+      include Mongoid::FullTextSearch
+
+      field :title
+      field :artist_name
+      field :gallery_name
+      filed :gallery_address
+
+      fulltext_search_in :title, :index_name => 'title_index'
+      fulltext_search_in :artist_name, :index_name => 'artist_name_index'
+      fulltext_search_in :gallery_name, :gallery_address, :index_name => 'gallery_index'
+    end
+
+The index names are helpful now because you'll have to specify which one you want to use when you
+call `fulltext_search`:
+
+    Artwork.fulltext_search('warhol', :index => 'artist_name_index')
+
+If you have multiple indexes specified and you don't supply a name to `fulltext_search`, the
+method call will raise an exception.
 
 If you're indexing multiple models, you may find that you need to combine results to create
 a single result set. For example, if both the `Artist` model and the `Artwork` model are
@@ -79,7 +113,7 @@ merge both into a single index by using the same `:external_index` parameter:
       include Mongoid::FullTextSearch
 
       field :title
-      fulltext_search_in :title, :external_index => 'artwork_and_artists'
+      fulltext_search_in :title, :index_name => 'artwork_and_artists'
     end
 
     class Artist
@@ -87,7 +121,7 @@ merge both into a single index by using the same `:external_index` parameter:
       include Mongoid::FullTextSearch
 
       field :name
-      fulltext_search_in :name, :external_index => 'artwork_and_artists'
+      fulltext_search_in :name, :index_name => 'artwork_and_artists'
     end
 
 Now that these two models share the same external index collection, we can search them both through
@@ -95,11 +129,6 @@ either model's `fulltext_search` method:
 
     Artwork.fulltext_search('picasso')  # returns same results as Artist.fulltext_search('picasso')
 
-Models with external indexes contain a complete internal index as well; you can access this to
-retrieve only results of that model's type by passing the `:use_internal_index` flag:
-
-    Artist.fulltext_search('picasso', :use_internal_index => true)
-    
 Running the specs
 -----------------
 

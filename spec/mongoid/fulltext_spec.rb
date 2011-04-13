@@ -233,13 +233,22 @@ module Mongoid
     end
     context "with multiple indexes defined" do
       
-      let!(:pop)                { MultiExternalArtwork.create(:title => 'Pop') }
-      let!(:pop_culture)        { MultiExternalArtwork.create(:title => 'Pop Culture') }
-      let!(:contemporary_pop)   { MultiExternalArtwork.create(:title => 'Contemporary Pop') }
-      let!(:kung_fu_lollipop)   { MultiExternalArtwork.create(:title => 'Kung-Fu Lollipop') }
+      let!(:pop)                { MultiExternalArtwork.create(:title => 'Pop', :year => '1970', :artist => 'Joe Schmoe') }
+      let!(:pop_culture)        { MultiExternalArtwork.create(:title => 'Pop Culture', :year => '1977', :artist => 'Jim Schmoe') }
+      let!(:contemporary_pop)   { MultiExternalArtwork.create(:title => 'Contemporary Pop', :year => '1800', :artist => 'Bill Schmoe') }
+      let!(:kung_fu_lollipop)   { MultiExternalArtwork.create(:title => 'Kung-Fu Lollipop', :year => '2006', :artist => 'Michael Anderson') }
       
       it "allows searches to hit a particular index" do
+        title_results = MultiExternalArtwork.fulltext_search('pop', :index => 'mongoid_fulltext.titles').sort_by{ |x| x.title }
+        title_results.should == [pop, pop_culture, contemporary_pop, kung_fu_lollipop].sort_by{ |x| x.title }
+        year_results = MultiExternalArtwork.fulltext_search('197', :index => 'mongoid_fulltext.years').sort_by{ |x| x.title }
+        year_results.should == [pop, pop_culture].sort_by{ |x| x.title }
+        all_results = MultiExternalArtwork.fulltext_search('1800 and', :index => 'mongoid_fulltext.all').sort_by{ |x| x.title }
+        all_results.should == [contemporary_pop, kung_fu_lollipop].sort_by{ |x| x.title }
+      end
 
+      it "should raise an error if you don't specify which index to search with" do
+        lambda { MultiExternalArtwork.fulltext_search('foobar') }.should raise_error(Mongoid::FullTextSearch::UnspecifiedIndexError)
       end
 
     end
