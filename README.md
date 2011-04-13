@@ -129,6 +129,68 @@ either model's `fulltext_search` method:
 
     Artwork.fulltext_search('picasso')  # returns same results as Artist.fulltext_search('picasso')
 
+If you want to filter the results from full-text search, you set up filters when the indexes are
+defined. For example, suppose that in addition to wanting to use the `artwork_and_artists` index
+defined above to search for `Artwork`s or `Artist`s, we want to be able to run full-text searches
+for artists only and for artworks priced above $10,000. Instead of creating two new indexes or
+attempting to filter the results after the query is run, we can specify the filter predicates
+at the time of index definition:
+
+    class Artwork
+      include Mongoid::Document
+      include Mongoid::FullTextSearch
+
+      field :title
+      field :price
+      fulltext_search_in :title, :index_name => 'artwork_and_artists',
+                         :filters => { :is_expensive => lambda { |x| x.price > 10000 },
+                                       :has_long_name => lambda { |x| x.title.length > 20 }}
+    end
+
+    class Artist
+      include Mongoid::Document
+      include Mongoid::FullTextSearch
+
+      field :name
+      field :birth_year
+      fulltext_search_in :name, :index_name => 'artwork_and_artists',
+                         :filters => { :born_before_1900 => lambda { |x| x.birth_year < 1900 },
+                                       :has_long_name => lambda { |x| x.name.length > 20}}
+    end
+
+After defining filters, you can query for results that match particular values of filters:
+
+    # Only return artists born before 1900 that match 'foobar'
+    Artist.fulltext_search('foobar', :born_before_1900 => true)
+
+    # Return artists or artworks that match 'foobar' and have short names
+    Artist.fulltext_search('foobar', :has_long_name => false)
+    
+    # Only return artworks with prices over 10000 that match 'mona lisa'
+    Artwork.fulltext_search('mona lisa', :is_expensive => true)
+
+    # Only return artworks with prices less than 10000 that match 'mona lisa'
+    Artwork.fulltext_search('mona lisa', :is_expensive => false)
+
+Note that in all of the example queries above, supplying a filter that is defined on exactly 
+one of the models will restrict the search to results from that model only. For example,
+since `:is_expensive` is defined only on `Artwork`s, a call to `fulltext_search` with either
+`:is_expensive => true` or `:is_expensive => false` will return only `Artwork` results.
+
+You can specify multiple filters per index and per model. Each filter is a predicate that will 
+be called on objects as they're inserted into the full-text index (any time the model is saved.) 
+Filters are only called on instances
+of models they're defined on, so in the example above, the `is_expensive` filter is only applied
+to instances of `Artwork` and the `born_before_1900` filter is only applied to instances of `Artist`,
+although both filters can be used when querying from either model. The `has_long_name` filter, on
+the other hand, will return instances of both `Artwork` and `Artist` since it's defined on each model
+
+Filters shouldn't ever throw, but if they do, the filter is just ignored. If you apply filters to
+indexes that are on multiple fields, the filter is applied to each field and the filter result is
+the AND of all of the individual results for each of the fields. Finally, if a filter is defined 
+but criteria for that filter aren't passed to `fulltext_search`, the result is as if the filter 
+had never been defined - you see both models that both pass and fail the filter in the results.
+
 Running the specs
 -----------------
 

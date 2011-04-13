@@ -40,15 +40,18 @@ module Mongoid::FullTextSearch
     end
 
     def fulltext_search(query_string, options={})
-      max_results = options.has_key?(:max_results) ? options[:max_results] : 10
+      max_results = options.has_key?(:max_results) ? options.delete(:max_results) : 10
       if self.mongoid_fulltext_config.count > 1 and !options.has_key?(:index) 
         error_message = '%s is indexed by multiple full-text indexes. You must specify one by passing an :index_name parameter'
         raise UnspecifiedIndexError, error_message % self.name, caller
       end
-      index_name = options.has_key?(:index) ? options[:index] : self.mongoid_fulltext_config.keys.first
+      index_name = options.has_key?(:index) ? options.delete(:index) : self.mongoid_fulltext_config.keys.first
+      
+      # options hash should only contain filters after this point      
       ngrams = all_ngrams(query_string, self.mongoid_fulltext_config[index_name])
       return [] if ngrams.empty?
       query = {'ngram' => {'$in' => ngrams.keys}}
+      query.update(Hash[options.map{ |key,value| ['filter_values.%s' % key, value] }])
       map = <<-EOS
         function() {
           emit(this['document_id'], {'class': this['class'], 'score': this['score']*ngrams[this['ngram']] })
@@ -106,9 +109,22 @@ module Mongoid::FullTextSearch
       field_values = fulltext_config[:ngram_fields].map { |field| self.send(field) }
       ngrams = field_values.inject({}) { |accum, item| accum.update(self.class.all_ngrams(item, fulltext_config, false))}
       return if ngrams.empty?
+      # apply filters, if necessary
+      filter_values = nil
+      if fulltext_config.has_key?(:filters)
+        filter_values = Hash[fulltext_config[:filters].map do |key,value|
+          begin 
+            [key, value.call(self)] 
+          rescue 
+            # Suppress any exceptions caused by filters
+          end
+        end.find_all{ |x| !x.nil? }]
+      end
       # insert new ngrams in external index
       ngrams.each_pair do |ngram, score|
-        coll.insert({'ngram' => ngram, 'document_id' => self._id, 'score' => score, 'class' => self.class.name})
+        index_document = {'ngram' => ngram, 'document_id' => self._id, 'score' => score, 'class' => self.class.name}
+        index_document['filter_values'] = filter_values if fulltext_config.has_key?(:filters)
+        coll.insert(index_document)
       end
     end
   end

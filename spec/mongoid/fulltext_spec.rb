@@ -274,5 +274,28 @@ module Mongoid
       end
 
     end
+    context "with filters applied to multiple models" do
+      
+      let!(:foobar_artwork)    { FilteredArtwork.create(:title => 'foobar') }
+      let!(:barfoo_artwork)    { FilteredArtwork.create(:title => 'barfoo') }
+      let!(:foobar_artist)     { FilteredArtist.create(:full_name => 'foobar') }
+      let!(:barfoo_artist)     { FilteredArtist.create(:full_name => 'barfoo') }
+
+      it "allows filtered searches" do
+        FilteredArtwork.fulltext_search('foobar', :is_artwork => true).should == [foobar_artwork, barfoo_artwork]
+        FilteredArtist.fulltext_search('foobar', :is_artwork => true).should == [foobar_artwork, barfoo_artwork]
+
+        FilteredArtwork.fulltext_search('foobar', :is_artwork => true, :is_foobar => true).should == [foobar_artwork]
+        FilteredArtwork.fulltext_search('foobar', :is_artwork => true, :is_foobar => false).should == [barfoo_artwork]
+        FilteredArtwork.fulltext_search('foobar', :is_artwork => false, :is_foobar => true).should == [foobar_artist]
+        FilteredArtwork.fulltext_search('foobar', :is_artwork => false, :is_foobar => false).should == [barfoo_artist]
+
+        FilteredArtist.fulltext_search('foobar', :is_artwork => true, :is_foobar => true).should == [foobar_artwork]
+        FilteredArtist.fulltext_search('foobar', :is_artwork => true, :is_foobar => false).should == [barfoo_artwork]
+        FilteredArtist.fulltext_search('foobar', :is_artwork => false, :is_foobar => true).should == [foobar_artist]
+        FilteredArtist.fulltext_search('foobar', :is_artwork => false, :is_foobar => false).should == [barfoo_artist]
+      end
+
+    end
   end
 end
