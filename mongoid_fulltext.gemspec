@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{mongoid_fulltext}
-  s.version = "0.2.0"
+  s.version = "0.3.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Aaron Windsor"]
@@ -31,6 +31,8 @@ Gem::Specification.new do |s|
     "spec/models/external_artist.rb",
     "spec/models/external_artwork.rb",
     "spec/models/external_artwork_no_fields_supplied.rb",
+    "spec/models/filtered_artist.rb",
+    "spec/models/filtered_artwork.rb",
     "spec/models/multi_external_artwork.rb",
     "spec/models/multi_field_artist.rb",
     "spec/models/multi_field_artwork.rb",
@@ -48,6 +50,8 @@ Gem::Specification.new do |s|
     "spec/models/external_artist.rb",
     "spec/models/external_artwork.rb",
     "spec/models/external_artwork_no_fields_supplied.rb",
+    "spec/models/filtered_artist.rb",
+    "spec/models/filtered_artwork.rb",
     "spec/models/multi_external_artwork.rb",
     "spec/models/multi_field_artist.rb",
     "spec/models/multi_field_artwork.rb",
