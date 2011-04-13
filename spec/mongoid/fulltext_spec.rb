@@ -252,5 +252,27 @@ module Mongoid
       end
 
     end
+    context "with multiple fields indexed and the same index used by multiple models" do
+      
+      let!(:andy_warhol)         { MultiFieldArtist.create(:full_name => 'Andy Warhol', :birth_year => '1928') }
+      let!(:warhol)              { MultiFieldArtwork.create(:title => 'Warhol', :year => '2010') }
+      let!(:pablo_picasso)       { MultiFieldArtist.create(:full_name => 'Pablo Picasso', :birth_year => '1881') }
+      let!(:portrait_of_picasso) { MultiFieldArtwork.create(:title => 'Portrait of Picasso', :year => '1912') }
+
+      it "allows searches across all models on both fields indexed" do
+        MultiFieldArtist.fulltext_search('2010').first.should == warhol
+        MultiFieldArtist.fulltext_search('andy').first.should == andy_warhol
+        MultiFieldArtist.fulltext_search('pablo').first.should == pablo_picasso
+        MultiFieldArtist.fulltext_search('1881').first.should == pablo_picasso
+        MultiFieldArtist.fulltext_search('portrait 1912').first.should == portrait_of_picasso
+        
+        MultiFieldArtwork.fulltext_search('2010').first.should == warhol
+        MultiFieldArtwork.fulltext_search('andy').first.should == andy_warhol
+        MultiFieldArtwork.fulltext_search('pablo').first.should == pablo_picasso
+        MultiFieldArtwork.fulltext_search('1881').first.should == pablo_picasso
+        MultiFieldArtwork.fulltext_search('portrait 1912').first.should == portrait_of_picasso
+      end
+
+    end
   end
 end
