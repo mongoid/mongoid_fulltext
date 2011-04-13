@@ -7,19 +7,19 @@ module Mongoid::FullTextSearch
 
   module ClassMethods
 
-    def default_index_name
-      'mongoid_fulltext.index' # TODO: add class name, append a digit based on size of self.mongoid_fulltext_config
-    end
-
     def fulltext_search_in(*args)
+      self.mongoid_fulltext_config = {} if self.mongoid_fulltext_config.nil?
       options = args.last.is_a?(Hash) ? args.pop : {}
-      index_name = options.has_key?(:index_name) ? options[:index_name] : self.default_index_name
+      if options.has_key?(:index_name)
+        index_name = options[:index_name]
+      else
+        index_name = 'mongoid_fulltext.index_%s_%s' % [self.name.downcase, self.mongoid_fulltext_config.count]
+      end
+
       config = {:alphabet => 'abcdefghijklmnopqrstuvwxyz0123456789 ',
                 :word_separators => ' ',
                 :ngram_width => 3,
                 :max_ngrams_to_search => 6,
-                :fulltext_prefix_score => 1,
-                :fulltext_infix_score => 2,
                 :apply_prefix_scoring_to_all_words => true}
       config.update(options)
 
@@ -28,19 +28,19 @@ module Mongoid::FullTextSearch
       config[:alphabet] = Hash[config[:alphabet].split('').map{ |ch| [ch,ch] }]
       config[:word_separators] = Hash[config[:word_separators].split('').map{ |ch| [ch,ch] }]
 
-      self.mongoid_fulltext_config = {} if self.mongoid_fulltext_config.nil?
       self.mongoid_fulltext_config[index_name] = config
 
       coll = collection.db.collection(index_name)
       coll.ensure_index([['ngram', Mongo::ASCENDING]])
 
-      before_save :update_ngrams
-      before_destroy :remove_ngrams
+      before_save :update_ngram_index
+      before_destroy :remove_from_ngram_index
     end
 
     def fulltext_search(query_string, options={})
       max_results = options.has_key?(:max_results) ? options[:max_results] : 10
-      index_name = options.has_key?(:index) ? options[:index] : self.default_index_name
+      # if self.mongoid_fulltext_config.count > 1 and !options.has_key?(:index) raise an exception
+      index_name = options.has_key?(:index) ? options[:index] : self.mongoid_fulltext_config.keys.first
       ngrams = all_ngrams(query_string, self.mongoid_fulltext_config[index_name])
       return [] if ngrams.empty?
       query = {'ngram' => {'$in' => ngrams.keys}}
@@ -80,9 +80,9 @@ module Mongoid::FullTextSearch
       Hash[(0..filtered_str.length - config[:ngram_width]).step(step_size).map do |i|
         if i == 0 or (config[:apply_prefix_scoring_to_all_words] and \
                       config[:word_separators].has_key?(filtered_str[i-1]))
-          score = Math.sqrt(config[:fulltext_prefix_score] + 1.0/filtered_str.length)
+          score = Math.sqrt(1 + 1.0/filtered_str.length)
         else
-          score = Math.sqrt(config[:fulltext_infix_score]/Float(filtered_str.length))
+          score = Math.sqrt(2.0/filtered_str.length)
         end
         [filtered_str[i..i+config[:ngram_width]-1], score]
       end]
@@ -92,7 +92,7 @@ module Mongoid::FullTextSearch
 
   protected
 
-  def update_ngrams
+  def update_ngram_index
     self.mongoid_fulltext_config.each_pair do |index_name, fulltext_config|
       # remove existing ngrams from external index
       coll = collection.db.collection(index_name)
@@ -108,7 +108,7 @@ module Mongoid::FullTextSearch
     end
   end
 
-  def remove_ngrams
+  def remove_from_ngram_index
     self.mongoid_fulltext_config.each_pair do |index_name, fulltext_config|
       coll = collection.db.collection(index_name)
       coll.remove({'document_id' => self._id})

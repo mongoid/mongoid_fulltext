@@ -95,7 +95,7 @@ module Mongoid
       end
 
     end
-    context "with a basic external index" do
+    context "with an index name specified" do
       let!(:pablo_picasso)       { ExternalArtist.create(:full_name => 'Pablo Picasso') }
       let!(:portrait_of_picasso) { ExternalArtwork.create(:title => 'Portrait of Picasso') }
       let!(:andy_warhol)         { ExternalArtist.create(:full_name => 'Andy Warhol') }
@@ -109,13 +109,6 @@ module Mongoid
         results = ExternalArtist.fulltext_search('picasso', :max_results => 2).map{ |result| result }
         results.member?(portrait_of_picasso).should be_true
         results.member?(pablo_picasso).should be_true
-      end
-
-      it "allows use of only the internal index" do
-        results = ExternalArtwork.fulltext_search('picasso', :max_results => 1, :use_internal_index => true).map { |result| result }
-        results.should == [portrait_of_picasso]
-        results = ExternalArtist.fulltext_search('picasso', :max_results => 1,  :use_internal_index => true).map { |result| result }
-        results.should == [pablo_picasso]
       end
 
       it "returns exact matches" do
@@ -164,27 +157,22 @@ module Mongoid
         ExternalArtist.fulltext_search('and').first.should == andy_warhol
       end
 
-      it "returns results for a single model when passed the :use_internal_index flag" do
-        ExternalArtist.fulltext_search('picasso warhol', :use_internal_index => true).should == [pablo_picasso, andy_warhol]
-        ExternalArtwork.fulltext_search('picasso warhol', :use_internal_index => true).should == [warhol, portrait_of_picasso]
-      end
-      
     end
-    context "with a basic external index" do
+    context "with an index name specified" do
 
       let!(:andy_warhol)         { ExternalArtist.create(:full_name => 'Andy Warhol') }
       let!(:warhol)              { ExternalArtwork.create(:title => 'Warhol') }
 
       it "doesn't blow up if garbage is in the index collection" do
         ExternalArtist.fulltext_search('warhol').should == [warhol, andy_warhol]
-        index_collection = ExternalArtist.collection.db.collection(ExternalArtist.external_index)
+        index_collection = ExternalArtist.collection.db.collection(ExternalArtist.mongoid_fulltext_config.keys.first)
         index_collection.update({'document_id' => warhol.id}, {'$set' => { 'document_id' => BSON::ObjectId.new }}, :multi => true)
         # We should no longer be able to find warhol, but that shouldn't keep it from returning results
         ExternalArtist.fulltext_search('warhol').should == [andy_warhol]
       end
       
     end
-    context "with a basic external index" do
+    context "with an index name specified" do
 
       let!(:pop)                { ExternalArtwork.create(:title => 'Pop') }
       let!(:pop_culture)        { ExternalArtwork.create(:title => 'Pop Culture') }
@@ -200,7 +188,7 @@ module Mongoid
       end
 
     end
-    context "with a basic external index" do
+    context "with an index name specified" do
       
       let!(:abc)       { ExternalArtwork.create(:title => "abc") }
       let!(:abcd)      { ExternalArtwork.create(:title => "abcd") }
@@ -219,7 +207,7 @@ module Mongoid
       end
 
     end
-    context "with a basic external index" do
+    context "with an index name specified" do
 
       it "cleans up item from the index after they're destroyed" do
         foobar = ExternalArtwork.create(:title => "foobar")
@@ -232,7 +220,7 @@ module Mongoid
       end
 
     end
-    context "with an external index and no fields provided to index" do
+    context "with an index name specified and no fields provided to index" do
 
       let!(:big_bang) { ExternalArtworkNoFieldsSupplied.create(:title => 'Big Bang', :artist => 'David Poppie', :year => '2009') }
 
@@ -243,7 +231,7 @@ module Mongoid
       end
 
     end
-    context "with multiple external indexes" do
+    context "with multiple indexes defined" do
       
       let!(:pop)                { MultiExternalArtwork.create(:title => 'Pop') }
       let!(:pop_culture)        { MultiExternalArtwork.create(:title => 'Pop Culture') }

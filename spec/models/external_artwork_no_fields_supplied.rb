@@ -4,7 +4,7 @@ class ExternalArtworkNoFieldsSupplied
   field :title
   field :year
   field :artist
-  fulltext_search_in :external_index => 'artworks_and_artists'
+  fulltext_search_in :index_name => 'mongoid_fulltext.artworks_and_artists'
 
   def to_s
     '%s (%s %s)' % [title, artist, year] 
