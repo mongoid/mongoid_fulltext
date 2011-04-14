@@ -29,7 +29,6 @@ module Mongoid::FullTextSearch
       config[:ngram_fields] = args
       config[:alphabet] = Hash[config[:alphabet].split('').map{ |ch| [ch,ch] }]
       config[:word_separators] = Hash[config[:word_separators].split('').map{ |ch| [ch,ch] }]
-
       self.mongoid_fulltext_config[index_name] = config
 
       coll = collection.db.collection(index_name)
@@ -68,15 +67,27 @@ module Mongoid::FullTextSearch
       EOS
       mr_options = {:scope => {:ngrams => ngrams }, :query => query, :raw => true}
       coll = collection.db.collection(index_name)
-      result_collection = coll.map_reduce(map, reduce, mr_options)['result']
-      results = collection.db.collection(result_collection).find.sort(['value.score',-1])
-      results = results.limit(max_results) if !max_results.nil?
-      models = results.map { |result| Object::const_get(result['value']['class']).find(:first, :conditions => {:id => result['_id']}) }\
-                      .find_all { |result| !result.nil? }
-      collection.db.collection(result_collection).drop
-      models
+      if collection.db.connection.server_version >= '1.7.4'
+        mr_options[:out] = {:inline => 1}
+        results = coll.map_reduce(map, reduce, mr_options)['results']
+        results.sort_by!{ |x| -x['value']['score'] }
+        max_results = results.count if max_results.nil?
+        instantiate_mapreduce_results(results.first(max_results))
+      else
+        result_collection = coll.map_reduce(map, reduce, mr_options)['result']
+        results = collection.db.collection(result_collection).find.sort(['value.score',-1])
+        results = results.limit(max_results) if !max_results.nil?
+        models = instantiate_mapreduce_results(results)
+        collection.db.collection(result_collection).drop
+        models
+      end
     end
     
+    def instantiate_mapreduce_results(results)
+      results.map { |result| Object::const_get(result['value']['class']).find(:first, :conditions => {:id => result['_id']}) }\
+             .find_all { |result| !result.nil? }
+    end
+
     def all_ngrams(str, config, bound_number_returned=true)
       return {} if str.nil? or str.length < config[:ngram_width]
       filtered_str = str.downcase.split('').map{ |ch| config[:alphabet][ch] }.find_all{ |ch| !ch.nil? }.join('')
