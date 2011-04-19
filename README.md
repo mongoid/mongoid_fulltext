@@ -191,6 +191,20 @@ the AND of all of the individual results for each of the fields. Finally, if a f
 but criteria for that filter aren't passed to `fulltext_search`, the result is as if the filter 
 had never been defined - you see both models that both pass and fail the filter in the results.
 
+Building the index
+------------------
+
+The fulltext index is build and maintained incrementally by hooking into `before_save` and 
+`before_destroy` callbacks on each model that's being indexed. If you want to build an index
+on existing models, you can call the `update_ngram_index` method on each instance:
+
+    Artwork.all.each { |artwork| artwork.update_ngram_index }
+
+You can also remove instances in bulk from the index with the `remove_from_ngram_index`
+method:
+
+    Artwork.all.each { |artwork| artwork.remove_from_ngram_index }
+
 Running the specs
 -----------------
 

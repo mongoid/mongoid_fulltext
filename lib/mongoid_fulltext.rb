@@ -109,8 +109,6 @@ module Mongoid::FullTextSearch
 
   end
 
-  protected
-
   def update_ngram_index
     self.mongoid_fulltext_config.each_pair do |index_name, fulltext_config|
       # remove existing ngrams from external index
