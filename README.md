@@ -1,7 +1,8 @@
 Mongoid Fulltext Search
 =======================
 
-Full-text search using n-gram matching for the Mongoid ODM. Works for MongoDB 1.6, support for 1.8 coming soon.
+Full-text search using n-gram matching for the Mongoid ODM. Tested on MongoDB 1.6 and above, but
+probably works on earlier versions as well.
 
 Some examples:
 --------------
