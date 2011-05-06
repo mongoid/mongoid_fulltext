@@ -97,7 +97,7 @@ module Mongoid::FullTextSearch
       end
       Hash[(0..filtered_str.length - config[:ngram_width]).step(step_size).map do |i|
         if i == 0 or (config[:apply_prefix_scoring_to_all_words] and \
-                      config[:word_separators].has_key?(filtered_str[i-1]))
+                      config[:word_separators].has_key?(filtered_str[i-1].chr))
           score = Math.sqrt(1 + 1.0/filtered_str.length)
         else
           score = Math.sqrt(2.0/filtered_str.length)
