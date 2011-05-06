@@ -40,3 +40,5 @@ tmtags
 
 # For vim:
 *.swp
+
+Gemfile.lock

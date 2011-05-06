@@ -69,8 +69,7 @@ module Mongoid::FullTextSearch
       coll = collection.db.collection(index_name)
       if collection.db.connection.server_version >= '1.7.4'
         mr_options[:out] = {:inline => 1}
-        results = coll.map_reduce(map, reduce, mr_options)['results']
-        results.sort_by!{ |x| -x['value']['score'] }
+        results = coll.map_reduce(map, reduce, mr_options)['results'].sort_by{ |x| -x['value']['score'] }
         max_results = results.count if max_results.nil?
         instantiate_mapreduce_results(results.first(max_results))
       else
@@ -98,7 +97,7 @@ module Mongoid::FullTextSearch
       end
       Hash[(0..filtered_str.length - config[:ngram_width]).step(step_size).map do |i|
         if i == 0 or (config[:apply_prefix_scoring_to_all_words] and \
-                      config[:word_separators].has_key?(filtered_str[i-1]))
+                      config[:word_separators].has_key?(filtered_str[i-1].chr))
           score = Math.sqrt(1 + 1.0/filtered_str.length)
         else
           score = Math.sqrt(2.0/filtered_str.length)
