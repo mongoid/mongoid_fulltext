@@ -69,8 +69,7 @@ module Mongoid::FullTextSearch
       coll = collection.db.collection(index_name)
       if collection.db.connection.server_version >= '1.7.4'
         mr_options[:out] = {:inline => 1}
-        results = coll.map_reduce(map, reduce, mr_options)['results']
-        results.sort_by!{ |x| -x['value']['score'] }
+        results = coll.map_reduce(map, reduce, mr_options)['results'].sort_by{ |x| -x['value']['score'] }
         max_results = results.count if max_results.nil?
         instantiate_mapreduce_results(results.first(max_results))
       else

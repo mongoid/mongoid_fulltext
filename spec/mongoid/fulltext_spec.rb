@@ -70,8 +70,8 @@ module Mongoid
 
       it "prefers the best prefix that matches a given string" do
         BasicArtwork.fulltext_search('yellow').first.should == yellow
-        BasicArtwork.fulltext_search('yellow leaves', :max_results => 3).sort_by!{ |x| x.title }.should == \
-          [yellow_leaves_2, yellow_leaves_3, yellow_leaves_20].sort_by!{ |x| x.title }
+        BasicArtwork.fulltext_search('yellow leaves', :max_results => 3).sort_by{ |x| x.title }.should == \
+          [yellow_leaves_2, yellow_leaves_3, yellow_leaves_20].sort_by{ |x| x.title }
         BasicArtwork.fulltext_search('yellow cup').first.should == yellow_cup
       end
 
