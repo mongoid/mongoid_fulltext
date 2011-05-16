@@ -192,6 +192,37 @@ the AND of all of the individual results for each of the fields. Finally, if a f
 but criteria for that filter aren't passed to `fulltext_search`, the result is as if the filter 
 had never been defined - you see both models that both pass and fail the filter in the results.
 
+Array filters
+-------------
+
+A filter may also return an Array, which will cause it to be expanded into multiple filters.
+Consider the following example.
+
+    class Artist
+      include Mongoid::Document
+      include Mongoid::FullTextSearch
+
+      field :name
+      field :exhibitions, as: Array, default: []
+
+      fulltext_search_in :name, :index_name => 'exhibited_artist',
+        :filters => { 
+          :exhibitions => lambda { |artist| artist.exhibitions }
+        }
+    end
+
+You can now find all artists that are at the Art Basel exhibition or all artists that have exhibited
+at both the Art Basel and the New York Armory exhibition.
+
+    # All artists
+    Artist.fulltext_search('foobar')
+
+    # Artists at the Art Basel exhibition only
+    Artist.fulltext_search('foobar', :exhibitions => [ "Art Basel" ])
+
+    # Artists at both the Art Basel and the New York Armory exhibition
+    Artist.fulltext_search('foobar', :exhibitions => [ "Art Basel", "New York Armory" ])
+
 Building the index
 ------------------
 

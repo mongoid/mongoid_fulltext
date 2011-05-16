@@ -2,6 +2,7 @@ require 'spec_helper'
 
 module Mongoid
   describe FullTextSearch do
+  
     context "with an several config options defined" do
 
       let!(:abcdef) { AdvancedArtwork.create(:title => 'abcdefg hijklmn') }
@@ -297,5 +298,21 @@ module Mongoid
       end
 
     end
+    
+    context "with partitions applied to a model" do
+      
+      let!(:artist_2) { PartitionedArtist.create(:full_name => 'foobar', :exhibitions => [ "Art Basel 2011", "Armory NY" ]) }
+      let!(:artist_1) { PartitionedArtist.create(:full_name => 'foobar', :exhibitions => [ "Art Basel 2011", ]) }
+      let!(:artist_0) { PartitionedArtist.create(:full_name => 'foobar', :exhibitions => [ ]) }
+
+      it "allows partitioned searches" do
+        PartitionedArtist.fulltext_search('foobar').should == [ artist_2, artist_1, artist_0 ]
+        PartitionedArtist.fulltext_search('foobar', :exhibitions => [ "Armory NY" ]).should == [ artist_2 ]
+        PartitionedArtist.fulltext_search('foobar', :exhibitions => [ "Art Basel 2011" ]).should == [ artist_2, artist_1 ]
+        PartitionedArtist.fulltext_search('foobar', :exhibitions => [ "Art Basel 2011", "Armory NY" ]).should == [ artist_2 ]
+      end
+
+    end
+    
   end
 end

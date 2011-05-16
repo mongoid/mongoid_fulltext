@@ -38,7 +38,7 @@ module Mongoid::FullTextSearch
       before_destroy :remove_from_ngram_index
     end
 
-    def fulltext_search(query_string, options={})
+    def fulltext_search(query_string, options={}, partitions = {})
       max_results = options.has_key?(:max_results) ? options.delete(:max_results) : 10
       if self.mongoid_fulltext_config.count > 1 and !options.has_key?(:index) 
         error_message = '%s is indexed by multiple full-text indexes. You must specify one by passing an :index_name parameter'
@@ -50,7 +50,15 @@ module Mongoid::FullTextSearch
       ngrams = all_ngrams(query_string, self.mongoid_fulltext_config[index_name])
       return [] if ngrams.empty?
       query = {'ngram' => {'$in' => ngrams.keys}}
-      query.update(Hash[options.map{ |key,value| ['filter_values.%s' % key, value] }])
+      options.each do |key, value|
+        if value.is_a?(Enumerable)
+          value.each do |name|
+            query["filter_values.#{key}_#{name}"] = true
+          end
+        else
+          query["filter_values.#{key}"] = value
+        end        
+      end
       map = <<-EOS
         function() {
           emit(this['document_id'], {'class': this['class'], 'score': this['score']*ngrams[this['ngram']] })
@@ -118,15 +126,22 @@ module Mongoid::FullTextSearch
       ngrams = field_values.inject({}) { |accum, item| accum.update(self.class.all_ngrams(item, fulltext_config, false))}
       return if ngrams.empty?
       # apply filters, if necessary
-      filter_values = nil
+      filter_values = {}
       if fulltext_config.has_key?(:filters)
-        filter_values = Hash[fulltext_config[:filters].map do |key,value|
-          begin 
-            [key, value.call(self)] 
+        fulltext_config[:filters].each do |key,value|
+          begin
+            filter_value = value.call(self)
+            if filter_value.is_a?(Enumerable)
+              filter_value.each do |name|
+                filter_values["#{key}_#{name}"] = true
+              end
+            else
+              filter_values[key] = filter_value
+            end
           rescue 
             # Suppress any exceptions caused by filters
           end
-        end.find_all{ |x| !x.nil? }]
+        end
       end
       # insert new ngrams in external index
       ngrams.each_pair do |ngram, score|
