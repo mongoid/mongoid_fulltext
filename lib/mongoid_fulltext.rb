@@ -50,7 +50,7 @@ module Mongoid::FullTextSearch
       ngrams = all_ngrams(query_string, self.mongoid_fulltext_config[index_name])
       return [] if ngrams.empty?
       query = {'ngram' => {'$in' => ngrams.keys}}
-      query.update(Hash[options.map{ |key,value| ['filter_values.%s' % key, value] }])
+      query.update(Hash[options.map { |key,value| [ 'filter_values.%s' % key, { '$all' => [ value ].flatten } ] }])
       map = <<-EOS
         function() {
           emit(this['document_id'], {'class': this['class'], 'score': this['score']*ngrams[this['ngram']] })
