@@ -195,8 +195,7 @@ had never been defined - you see both models that both pass and fail the filter 
 Array filters
 -------------
 
-A filter may also return an Array, which will cause it to be expanded into multiple filters.
-Consider the following example.
+A filter may also return an Array. Consider the following example.
 
     class Artist
       include Mongoid::Document

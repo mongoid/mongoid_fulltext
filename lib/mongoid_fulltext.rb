@@ -50,15 +50,7 @@ module Mongoid::FullTextSearch
       ngrams = all_ngrams(query_string, self.mongoid_fulltext_config[index_name])
       return [] if ngrams.empty?
       query = {'ngram' => {'$in' => ngrams.keys}}
-      options.each do |key, value|
-        if value.is_a?(Enumerable)
-          value.each do |name|
-            query["filter_values.#{key}_#{name}"] = true
-          end
-        else
-          query["filter_values.#{key}"] = value
-        end        
-      end
+      query.update(Hash[options.map { |key,value| [ 'filter_values.%s' % key, { '$all' => [ value ].flatten } ] }])
       map = <<-EOS
         function() {
           emit(this['document_id'], {'class': this['class'], 'score': this['score']*ngrams[this['ngram']] })
@@ -126,22 +118,15 @@ module Mongoid::FullTextSearch
       ngrams = field_values.inject({}) { |accum, item| accum.update(self.class.all_ngrams(item, fulltext_config, false))}
       return if ngrams.empty?
       # apply filters, if necessary
-      filter_values = {}
+      filter_values = nil
       if fulltext_config.has_key?(:filters)
-        fulltext_config[:filters].each do |key,value|
-          begin
-            filter_value = value.call(self)
-            if filter_value.is_a?(Enumerable)
-              filter_value.each do |name|
-                filter_values["#{key}_#{name}"] = true
-              end
-            else
-              filter_values[key] = filter_value
-            end
+        filter_values = Hash[fulltext_config[:filters].map do |key,value|
+          begin 
+            [key, value.call(self)] 
           rescue 
             # Suppress any exceptions caused by filters
           end
-        end
+        end.find_all{ |x| !x.nil? }]
       end
       # insert new ngrams in external index
       ngrams.each_pair do |ngram, score|
