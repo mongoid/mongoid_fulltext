@@ -38,7 +38,7 @@ module Mongoid::FullTextSearch
       before_destroy :remove_from_ngram_index
     end
 
-    def fulltext_search(query_string, options={}, partitions = {})
+    def fulltext_search(query_string, options={})
       max_results = options.has_key?(:max_results) ? options.delete(:max_results) : 10
       if self.mongoid_fulltext_config.count > 1 and !options.has_key?(:index) 
         error_message = '%s is indexed by multiple full-text indexes. You must specify one by passing an :index_name parameter'
