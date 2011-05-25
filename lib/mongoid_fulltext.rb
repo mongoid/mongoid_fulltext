@@ -40,6 +40,7 @@ module Mongoid::FullTextSearch
 
     def fulltext_search(query_string, options={})
       max_results = options.has_key?(:max_results) ? options.delete(:max_results) : 10
+      return_scores = options.has_key?(:return_scores) ? options.delete(:return_scores) : false
       if self.mongoid_fulltext_config.count > 1 and !options.has_key?(:index) 
         error_message = '%s is indexed by multiple full-text indexes. You must specify one by passing an :index_name parameter'
         raise UnspecifiedIndexError, error_message % self.name, caller
@@ -66,25 +67,33 @@ module Mongoid::FullTextSearch
         }
       EOS
       mr_options = {:scope => {:ngrams => ngrams }, :query => query, :raw => true}
+      rc_options = { :return_scores => return_scores }
       coll = collection.db.collection(index_name)
       if collection.db.connection.server_version >= '1.7.4'
         mr_options[:out] = {:inline => 1}
         results = coll.map_reduce(map, reduce, mr_options)['results'].sort_by{ |x| -x['value']['score'] }
         max_results = results.count if max_results.nil?
-        instantiate_mapreduce_results(results.first(max_results))
+        instantiate_mapreduce_results(results.first(max_results), rc_options)
       else
         result_collection = coll.map_reduce(map, reduce, mr_options)['result']
         results = collection.db.collection(result_collection).find.sort(['value.score',-1])
         results = results.limit(max_results) if !max_results.nil?
-        models = instantiate_mapreduce_results(results)
+        models = instantiate_mapreduce_results(results, rc_options)
         collection.db.collection(result_collection).drop
         models
       end
     end
     
-    def instantiate_mapreduce_results(results)
-      results.map { |result| Object::const_get(result['value']['class']).find(:first, :conditions => {:id => result['_id']}) }\
-             .find_all { |result| !result.nil? }
+    def instantiate_mapreduce_result(result)
+      Object::const_get(result['value']['class']).find(:first, :conditions => {:id => result['_id']})
+    end
+    
+    def instantiate_mapreduce_results(results, options)
+      if (options[:return_scores])
+        results.map { |result| [ instantiate_mapreduce_result(result), result['value']['score'] ] }.find_all { |result| ! result[0].nil? }
+      else
+        results.map { |result| instantiate_mapreduce_result(result) }.find_all { |result| ! result.nil? }
+      end
     end
 
     def all_ngrams(str, config, bound_number_returned=true)
