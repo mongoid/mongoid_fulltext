@@ -33,7 +33,8 @@ module Mongoid::FullTextSearch
 
       coll = collection.db.collection(index_name)
       coll.ensure_index([['ngram', Mongo::ASCENDING]])
-
+      coll.ensure_index([['document_id', Mongo::ASCENDING]])
+      
       before_save :update_ngram_index
       before_destroy :remove_from_ngram_index
     end
