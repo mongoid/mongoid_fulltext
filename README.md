@@ -44,7 +44,11 @@ index, so we can get the same effect of our Artist index above using:
 
 To restrict the number of results returned, pass the `:max_results` parameter to `fulltext_search`:
 
-    Artist.fulltext_search("vince vangogh", :max_results => 5)
+    Artist.fulltext_search("vince vangogh", { :max_results => 5 })
+
+To return a pair of `[ result, score ]` instead of an array of results, pass the `:return_scores` parameter to `fulltext_search`:
+
+    Artist.fulltext_search("vince vangogh", { :return_scores => true })
 
 If you don't specify a field to index, the default is the result of `to_s` called on the object.
 The following definition will index the first and last name of an artist:

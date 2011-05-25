@@ -2,8 +2,8 @@ require 'spec_helper'
 
 module Mongoid
   describe FullTextSearch do
-  
-    context "with an several config options defined" do
+
+    context "with several config options defined" do
 
       let!(:abcdef) { AdvancedArtwork.create(:title => 'abcdefg hijklmn') }
 
@@ -60,7 +60,9 @@ module Mongoid
         BasicArtwork.fulltext_search('coo').first.should == cookies
         BasicArtwork.fulltext_search('c!!!oo').first.should == cookies
       end
+            
     end
+
     context "with default settings" do
 
       let!(:yellow)             { BasicArtwork.create(:title => 'Yellow') }
@@ -77,6 +79,7 @@ module Mongoid
       end
 
     end
+    
     context "with default settings" do
       
       let!(:abc)       { BasicArtwork.create(:title => "abc") }
@@ -312,6 +315,24 @@ module Mongoid
         PartitionedArtist.fulltext_search('foobar', :exhibitions => [ "Art Basel 2011", "Armory NY" ]).should == [ artist_2 ]
       end
 
+    end
+    
+    context "using search options" do
+      let!(:patterns)    { BasicArtwork.create(:title => 'Flower Patterns') }
+      let!(:flowers)     { BasicArtwork.create(:title => 'Flowers') }
+
+      it "returns max_results" do
+        BasicArtwork.fulltext_search('flower', { :max_results => 1 }).length.should == 1
+      end
+      
+      it "returns scored results" do
+        results = BasicArtwork.fulltext_search('flower', { :return_scores => true })
+        first_result = results[0]
+        first_result.is_a?(Array).should be_true
+        first_result.size.should == 2
+        first_result[0].should == flowers
+        first_result[1].is_a?(Float).should be_true
+      end
     end
     
   end
