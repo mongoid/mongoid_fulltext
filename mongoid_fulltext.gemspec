@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{mongoid_fulltext}
-  s.version = "0.3.5"
+  s.version = "0.3.6"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Aaron Windsor"]
-  s.date = %q{2011-05-25}
+  s.date = %q{2011-05-27}
   s.description = %q{Full-text search for the Mongoid ORM, using n-grams extracted from text}
   s.email = %q{aaron.windsor@gmail.com}
   s.extra_rdoc_files = [
