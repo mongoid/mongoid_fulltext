@@ -170,7 +170,7 @@ After defining filters, you can query for results that match particular values o
 
     # Return artists or artworks that match 'foobar' and have short names
     Artist.fulltext_search('foobar', :has_long_name => false)
-    
+
     # Only return artworks with prices over 10000 that match 'mona lisa'
     Artwork.fulltext_search('mona lisa', :is_expensive => true)
 
@@ -184,17 +184,29 @@ since `:is_expensive` is defined only on `Artwork`s, a call to `fulltext_search`
 
 You can specify multiple filters per index and per model. Each filter is a predicate that will 
 be called on objects as they're inserted into the full-text index (any time the model is saved.) 
-Filters are only called on instances
-of models they're defined on, so in the example above, the `is_expensive` filter is only applied
-to instances of `Artwork` and the `born_before_1900` filter is only applied to instances of `Artist`,
-although both filters can be used when querying from either model. The `has_long_name` filter, on
-the other hand, will return instances of both `Artwork` and `Artist` since it's defined on each model
+Filters are only called on instances of models they're defined on, so in the example above, the 
+`is_expensive` filter is only applied to instances of `Artwork` and the `born_before_1900` filter 
+is only applied to instances of `Artist`, although both filters can be used when querying from 
+either model. The `has_long_name` filter, on the other hand, will return instances of both 
+`Artwork` and `Artist` since it's defined on each model.
 
 Filters shouldn't ever throw, but if they do, the filter is just ignored. If you apply filters to
 indexes that are on multiple fields, the filter is applied to each field and the filter result is
 the AND of all of the individual results for each of the fields. Finally, if a filter is defined 
 but criteria for that filter aren't passed to `fulltext_search`, the result is as if the filter 
 had never been defined - you see both models that both pass and fail the filter in the results.
+
+Indexing Options
+----------------
+
+Additional indexing/query options can be used as parameters to `fulltext_search_in`.
+
+* `alphabet`: letters to index, default is `abcdefghijklmnopqrstuvwxyz0123456789 `
+* `word_separators`: word separators, default is ` `
+* `ngram_width`: ngram width, default is `3`
+* `index_full_words`: index full words, which improves exact matches, default is `true` 
+* `apply_prefix_scoring_to_all_words`: score n-grams at beginning of words higher, default is `true`
+* `max_ngrams_to_search`: maximum number of ngrams to query at any given time, default is `6`
 
 Array filters
 -------------
@@ -229,7 +241,7 @@ at both the Art Basel and the New York Armory exhibition.
 Building the index
 ------------------
 
-The fulltext index is build and maintained incrementally by hooking into `before_save` and 
+The fulltext index is built and maintained incrementally by hooking into `before_save` and 
 `before_destroy` callbacks on each model that's being indexed. If you want to build an index
 on existing models, you can call the `update_ngram_index` method on each instance:
 
@@ -244,3 +256,4 @@ Running the specs
 -----------------
 
 To run the specs, execute `rake spec`. You need a local MongoDB instance to run the specs.
+
