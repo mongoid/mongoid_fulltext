@@ -18,11 +18,15 @@ module Mongoid::FullTextSearch
         index_name = 'mongoid_fulltext.index_%s_%s' % [self.name.downcase, self.mongoid_fulltext_config.count]
       end
 
-      config = {:alphabet => 'abcdefghijklmnopqrstuvwxyz0123456789 ',
-                :word_separators => ' ',
-                :ngram_width => 3,
-                :max_ngrams_to_search => 6,
-                :apply_prefix_scoring_to_all_words => true}
+      config = { 
+        :alphabet => 'abcdefghijklmnopqrstuvwxyz0123456789 ',
+        :word_separators => ' ',
+        :ngram_width => 3,
+        :max_ngrams_to_search => 6,
+        :apply_prefix_scoring_to_all_words => true,
+        :index_full_words => true
+      }
+      
       config.update(options)
 
       args = [:to_s] if args.empty?
@@ -51,6 +55,7 @@ module Mongoid::FullTextSearch
       # options hash should only contain filters after this point      
       ngrams = all_ngrams(query_string, self.mongoid_fulltext_config[index_name])
       return [] if ngrams.empty?
+      
       query = {'ngram' => {'$in' => ngrams.keys}}
       query.update(Hash[options.map { |key,value| [ 'filter_values.%s' % key, { '$all' => [ value ].flatten } ] }])
       map = <<-EOS
@@ -97,15 +102,19 @@ module Mongoid::FullTextSearch
       end
     end
 
-    def all_ngrams(str, config, bound_number_returned=true)
+    # returns an [ngram, score] [ngram, position] pair
+    def all_ngrams(str, config, bound_number_returned = true)
       return {} if str.nil? or str.length < config[:ngram_width]
       filtered_str = str.downcase.split('').map{ |ch| config[:alphabet][ch] }.find_all{ |ch| !ch.nil? }.join('')
+      
       if bound_number_returned
         step_size = [((filtered_str.length - config[:ngram_width]).to_f / config[:max_ngrams_to_search]).ceil, 1].max
       else
         step_size = 1
       end
-      Hash[(0..filtered_str.length - config[:ngram_width]).step(step_size).map do |i|
+      
+      # array of ngrams
+      ngram_ary = (0..filtered_str.length - config[:ngram_width]).step(step_size).map do |i|
         if i == 0 or (config[:apply_prefix_scoring_to_all_words] and \
                       config[:word_separators].has_key?(filtered_str[i-1].chr))
           score = Math.sqrt(1 + 1.0/filtered_str.length)
@@ -113,7 +122,24 @@ module Mongoid::FullTextSearch
           score = Math.sqrt(2.0/filtered_str.length)
         end
         [filtered_str[i..i+config[:ngram_width]-1], score]
-      end]
+      end
+      
+      if (config[:index_full_words])
+        filtered_str.split(Regexp.compile(config[:word_separators].keys.join)).each do |word|
+          if word.length >= config[:ngram_width]
+            ngram_ary << [ word, 1 ]
+          end
+        end
+      end
+      
+      ngram_hash = {}
+      
+      # deduplicate, and keep the highest score
+      ngram_ary.each do |ngram, score, position|        
+        ngram_hash[ngram] = [ngram_hash[ngram] || 0, score].max
+      end
+      
+      ngram_hash
     end
 
   end

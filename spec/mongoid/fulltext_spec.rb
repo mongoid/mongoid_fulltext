@@ -77,7 +77,16 @@ module Mongoid
           [yellow_leaves_2, yellow_leaves_3, yellow_leaves_20].sort_by{ |x| x.title }
         BasicArtwork.fulltext_search('yellow cup').first.should == yellow_cup
       end
+      
+    end
+    
+    context "with default settings" do
+      let!(:monet)             { BasicArtwork.create(:title => 'claude monet') }
+      let!(:one_month_weather_permitting)  { BasicArtwork.create(:title => 'one month weather permitting monday') }
 
+      it "finds better matches within exact strings" do
+        BasicArtwork.fulltext_search('monet').first.should == monet
+      end
     end
     
     context "with default settings" do
@@ -326,7 +335,7 @@ module Mongoid
       end
       
       it "returns scored results" do
-        results = BasicArtwork.fulltext_search('flower', { :return_scores => true })
+        results = BasicArtwork.fulltext_search('flowers', { :return_scores => true })
         first_result = results[0]
         first_result.is_a?(Array).should be_true
         first_result.size.should == 2
