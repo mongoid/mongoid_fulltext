@@ -126,7 +126,9 @@ module Mongoid::FullTextSearch
       
       if (config[:index_full_words])
         filtered_str.split(Regexp.compile(config[:word_separators].keys.join)).each do |word|
-          ngram_ary << [ word, 1 ]
+          if word.length >= config[:ngram_width]
+            ngram_ary << [ word, 1 ]
+          end
         end
       end
       
