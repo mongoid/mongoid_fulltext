@@ -243,14 +243,27 @@ Building the index
 
 The fulltext index is built and maintained incrementally by hooking into `before_save` and 
 `before_destroy` callbacks on each model that's being indexed. If you want to build an index
-on existing models, you can call the `update_ngram_index` method on each instance:
+on existing models, you can call the `update_ngram_index` method on the class or each instance:
 
-    Artwork.all.each { |artwork| artwork.update_ngram_index }
+    Artwork.update_ngram_index
+    Artwork.find(id).update_ngram_index
 
-You can also remove instances in bulk from the index with the `remove_from_ngram_index`
+You can specify whether you want to update the index incrementally.
+
+    # won't start by removing all Artwork records from the index
+    Artwork.update_ngram_index({:incremental => true})
+
+    # won't try to remove the artwork record from the index
+    Artwork.find(id).update_ngram_index({:incremental => false})
+
+You can remove all or individual instances from the index with the `remove_from_ngram_index`
 method:
 
-    Artwork.all.each { |artwork| artwork.remove_from_ngram_index }
+    Artwork.remove_from_ngram_index
+    Artwork.find(id).remove_from_ngram_index
+
+The model methods perform bulk removal operations and are therefore faster that updating or removing
+records individually.
 
 Running the specs
 -----------------

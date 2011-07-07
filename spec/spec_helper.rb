@@ -16,5 +16,6 @@ Dir["#{File.dirname(__FILE__)}/models/*.rb"].each { |f| require f }
 Rspec.configure do |c|
   c.before(:all)  { DatabaseCleaner.strategy = :truncation }
   c.before(:each) { DatabaseCleaner.clean }
+  c.after(:all) { Mongoid.master.command({'repairDatabase' => 1}) }
 end
 

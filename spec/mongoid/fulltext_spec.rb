@@ -343,6 +343,71 @@ module Mongoid
         first_result[1].is_a?(Float).should be_true
       end
     end
+
+    context "remove_from_ngram_index" do
+      let!(:flowers1)     { BasicArtwork.create(:title => 'Flowers 1') }
+      let!(:flowers2)     { BasicArtwork.create(:title => 'Flowers 1') }
+
+      it "removes all records from the index" do
+        BasicArtwork.remove_from_ngram_index
+        BasicArtwork.fulltext_search('flower').length.should == 0
+      end
+      
+      it "removes a single record from the index" do
+        flowers1.remove_from_ngram_index
+        BasicArtwork.fulltext_search('flower').length.should == 1        
+      end      
+    end
+    
+    context "update_ngram_index" do
+      let!(:flowers1)     { BasicArtwork.create(:title => 'Flowers 1') }
+      let!(:flowers2)     { BasicArtwork.create(:title => 'Flowers 2') }
+
+      context "from scratch" do
+
+        before(:each) do
+          Mongoid.master["mongoid_fulltext.index_basicartwork_0"].drop
+        end
+
+        it "fails with a map-reduce error" do
+          lambda { BasicArtwork.fulltext_search('flower') }.should raise_error(Mongo::OperationFailure)
+        end
+        
+        it "updates index on a single record" do
+          flowers1.update_ngram_index
+          BasicArtwork.fulltext_search('flower').length.should == 1
+        end
+        
+        it "updates index on all records" do
+          BasicArtwork.update_ngram_index
+          BasicArtwork.fulltext_search('flower').length.should == 2
+        end
+
+      end
+      
+      context "incremental" do
+      
+        it "removes an existing record" do
+          coll = Mongoid.master["mongoid_fulltext.index_basicartwork_0"]
+          Mongoid.master.stub(:collection).with("mongoid_fulltext.index_basicartwork_0").and_return { coll }
+          coll.should_receive(:remove).with({'document_id' => flowers1._id})
+          flowers1.update_ngram_index
+        end
+        
+      end
+      
+      context "non-incremental" do
+      
+        it "doesn't remove an existing record" do
+          coll = Mongoid.master["mongoid_fulltext.index_basicartwork_0"]
+          Mongoid.master.stub(:collection).with("mongoid_fulltext.index_basicartwork_0").and_return { coll }
+          coll.should_not_receive(:remove).with({'document_id' => flowers1._id})
+          flowers1.update_ngram_index({:incremental => false})
+        end
+        
+      end
+
+    end
     
   end
 end

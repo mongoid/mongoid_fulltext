@@ -8,7 +8,7 @@ module Mongoid::FullTextSearch
   class UnspecifiedIndexError < StandardError; end
 
   module ClassMethods
-
+  
     def fulltext_search_in(*args)
       self.mongoid_fulltext_config = {} if self.mongoid_fulltext_config.nil?
       options = args.last.is_a?(Hash) ? args.pop : {}
@@ -141,14 +141,29 @@ module Mongoid::FullTextSearch
       
       ngram_hash
     end
-
+    
+    def remove_from_ngram_index
+      self.mongoid_fulltext_config.each_pair do |index_name, fulltext_config|
+        coll = collection.db.collection(index_name)
+        coll.remove({'class' => self.name})
+      end
+    end
+    
+    def update_ngram_index(options = { :incremental => false})
+      incremental = options && options[:incremental]
+      remove_from_ngram_index if ! incremental
+      self.all.each do |model|
+        model.update_ngram_index({ :incremental => ! incremental })
+      end
+    end
+    
   end
 
-  def update_ngram_index
+  def update_ngram_index(options = { :incremental => true })
     self.mongoid_fulltext_config.each_pair do |index_name, fulltext_config|
       # remove existing ngrams from external index
       coll = collection.db.collection(index_name)
-      coll.remove({'document_id' => self._id})
+      coll.remove({'document_id' => self._id}) if options && options[:incremental]
       # extract ngrams from fields
       field_values = fulltext_config[:ngram_fields].map { |field| self.send(field) }
       ngrams = field_values.inject({}) { |accum, item| accum.update(self.class.all_ngrams(item, fulltext_config, false))}
