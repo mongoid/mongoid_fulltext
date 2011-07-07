@@ -8,7 +8,7 @@ module Mongoid::FullTextSearch
   class UnspecifiedIndexError < StandardError; end
 
   module ClassMethods
-
+  
     def fulltext_search_in(*args)
       self.mongoid_fulltext_config = {} if self.mongoid_fulltext_config.nil?
       options = args.last.is_a?(Hash) ? args.pop : {}
@@ -141,7 +141,20 @@ module Mongoid::FullTextSearch
       
       ngram_hash
     end
-
+    
+    def remove_from_ngram_index
+      self.mongoid_fulltext_config.each_pair do |index_name, fulltext_config|
+        coll = collection.db.collection(index_name)
+        coll.remove({'class' => self.name})
+      end
+    end
+    
+    def update_ngram_index
+      self.all.each do |model|
+        model.update_ngram_index
+      end
+    end
+    
   end
 
   def update_ngram_index
