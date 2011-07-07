@@ -149,21 +149,19 @@ module Mongoid::FullTextSearch
       end
     end
     
-    def update_ngram_index(options = { :incremental => false})
-      incremental = options && options[:incremental]
-      remove_from_ngram_index if ! incremental
+    def update_ngram_index
       self.all.each do |model|
-        model.update_ngram_index({ :incremental => ! incremental })
+        model.update_ngram_index
       end
     end
     
   end
 
-  def update_ngram_index(options = { :incremental => true })
+  def update_ngram_index
     self.mongoid_fulltext_config.each_pair do |index_name, fulltext_config|
       # remove existing ngrams from external index
       coll = collection.db.collection(index_name)
-      coll.remove({'document_id' => self._id}) if options && options[:incremental]
+      coll.remove({'document_id' => self._id})
       # extract ngrams from fields
       field_values = fulltext_config[:ngram_fields].map { |field| self.send(field) }
       ngrams = field_values.inject({}) { |accum, item| accum.update(self.class.all_ngrams(item, fulltext_config, false))}

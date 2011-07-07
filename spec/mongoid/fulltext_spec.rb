@@ -390,19 +390,8 @@ module Mongoid
         it "removes an existing record" do
           coll = Mongoid.master["mongoid_fulltext.index_basicartwork_0"]
           Mongoid.master.stub(:collection).with("mongoid_fulltext.index_basicartwork_0").and_return { coll }
-          coll.should_receive(:remove).with({'document_id' => flowers1._id})
+          coll.should_receive(:remove).once.with({'document_id' => flowers1._id})
           flowers1.update_ngram_index
-        end
-        
-      end
-      
-      context "non-incremental" do
-      
-        it "doesn't remove an existing record" do
-          coll = Mongoid.master["mongoid_fulltext.index_basicartwork_0"]
-          Mongoid.master.stub(:collection).with("mongoid_fulltext.index_basicartwork_0").and_return { coll }
-          coll.should_not_receive(:remove).with({'document_id' => flowers1._id})
-          flowers1.update_ngram_index({:incremental => false})
         end
         
       end

@@ -248,22 +248,14 @@ on existing models, you can call the `update_ngram_index` method on the class or
     Artwork.update_ngram_index
     Artwork.find(id).update_ngram_index
 
-You can specify whether you want to update the index incrementally.
-
-    # won't start by removing all Artwork records from the index
-    Artwork.update_ngram_index({:incremental => true})
-
-    # won't try to remove the artwork record from the index
-    Artwork.find(id).update_ngram_index({:incremental => false})
-
 You can remove all or individual instances from the index with the `remove_from_ngram_index`
 method:
 
     Artwork.remove_from_ngram_index
     Artwork.find(id).remove_from_ngram_index
 
-The model methods perform bulk removal operations and are therefore faster that updating or removing
-records individually.
+The methods on the model level perform bulk removal operations and are therefore faster that 
+updating or removing records individually.
 
 Running the specs
 -----------------
