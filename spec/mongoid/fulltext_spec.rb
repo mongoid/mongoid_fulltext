@@ -62,6 +62,23 @@ module Mongoid
       end
             
     end
+    
+    context "with default settings" do
+      
+      let!(:flower_myth) { Gallery::BasicArtwork.create(:title => 'Flower Myth') }
+      let!(:flowers)     { Gallery::BasicArtwork.create(:title => 'Flowers') }
+      let!(:lowered)     { Gallery::BasicArtwork.create(:title => 'Lowered') }
+      let!(:cookies)     { Gallery::BasicArtwork.create(:title => 'Cookies') }
+      let!(:empty)       { Gallery::BasicArtwork.create(:title => '') }
+      
+      it "returns exact matches for model within a module" do
+        Gallery::BasicArtwork.fulltext_search('Flower Myth', :max_results => 1).first.should == flower_myth
+        Gallery::BasicArtwork.fulltext_search('Flowers', :max_results => 1).first.should == flowers
+        Gallery::BasicArtwork.fulltext_search('Cookies', :max_results => 1).first.should == cookies
+        Gallery::BasicArtwork.fulltext_search('Lowered', :max_results => 1).first.should == lowered
+      end
+      
+    end
 
     context "with default settings" do
 
