@@ -24,7 +24,8 @@ module Mongoid::FullTextSearch
         :ngram_width => 3,
         :max_ngrams_to_search => 6,
         :apply_prefix_scoring_to_all_words => true,
-        :index_full_words => true
+        :index_full_words => true,
+        :max_candidate_set_size => 1000
       }
       
       config.update(options)
@@ -36,8 +37,9 @@ module Mongoid::FullTextSearch
       self.mongoid_fulltext_config[index_name] = config
 
       coll = collection.db.collection(index_name)
-      coll.ensure_index([['ngram', Mongo::ASCENDING]])
-      coll.ensure_index([['document_id', Mongo::ASCENDING]])
+      coll.ensure_index([['ngram', Mongo::ASCENDING]]) # needed to make lookups fast
+      coll.ensure_index([['score', Mongo::DESCENDING]]) # needed to sort by scores
+      coll.ensure_index([['document_id', Mongo::ASCENDING]]) # needed to make removes fast
       
       before_save :update_ngram_index
       before_destroy :remove_from_ngram_index
@@ -72,7 +74,12 @@ module Mongoid::FullTextSearch
           return({'class': values[0]['class'], 'score': score})
         }
       EOS
-      mr_options = {:scope => {:ngrams => ngrams }, :query => query, :raw => true}
+      mr_options = { :scope => {:ngrams => ngrams }, 
+                     :query => query, 
+                     :raw => true, 
+                     :sort => { 'score' => -1 },
+                     :limit => options[:max_candidate_set_size]
+                    }
       rc_options = { :return_scores => return_scores }
       coll = collection.db.collection(index_name)
       if collection.db.connection.server_version >= '1.7.4'
@@ -105,7 +112,7 @@ module Mongoid::FullTextSearch
     # returns an [ngram, score] [ngram, position] pair
     def all_ngrams(str, config, bound_number_returned = true)
       return {} if str.nil? or str.length < config[:ngram_width]
-      filtered_str = str.downcase.split('').map{ |ch| config[:alphabet][ch] }.find_all{ |ch| !ch.nil? }.join('')
+      filtered_str = str.downcase.split('').map{ |ch| config[:alphabet][ch] }.compact.join('')
       
       if bound_number_returned
         step_size = [((filtered_str.length - config[:ngram_width]).to_f / config[:max_ngrams_to_search]).ceil, 1].max
@@ -127,7 +134,7 @@ module Mongoid::FullTextSearch
       if (config[:index_full_words])
         filtered_str.split(Regexp.compile(config[:word_separators].keys.join)).each do |word|
           if word.length >= config[:ngram_width]
-            ngram_ary << [ word, 1 ]
+            ngram_ary << [ word, 2 ]
           end
         end
       end

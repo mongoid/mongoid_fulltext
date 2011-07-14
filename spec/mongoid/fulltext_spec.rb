@@ -383,13 +383,9 @@ module Mongoid
       context "from scratch" do
 
         before(:each) do
-          Mongoid.master["mongoid_fulltext.index_basicartwork_0"].drop
+          Mongoid.master["mongoid_fulltext.index_basicartwork_0"].remove
         end
 
-        it "fails with a map-reduce error" do
-          lambda { BasicArtwork.fulltext_search('flower') }.should raise_error(Mongo::OperationFailure)
-        end
-        
         it "updates index on a single record" do
           flowers1.update_ngram_index
           BasicArtwork.fulltext_search('flower').length.should == 1
