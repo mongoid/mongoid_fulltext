@@ -207,6 +207,10 @@ Additional indexing/query options can be used as parameters to `fulltext_search_
 * `index_full_words`: index full words, which improves exact matches, default is `true` 
 * `apply_prefix_scoring_to_all_words`: score n-grams at beginning of words higher, default is `true`
 * `max_ngrams_to_search`: maximum number of ngrams to query at any given time, default is `6`
+* `max_candidate_set_size`: maximum number of candidate ngrams to examine for a given query.
+  Defaults to 1000. If you're seeing poor results, you can try increasing this value to consider
+  more ngrams per query (changing this parameter does not require a re-index.) The amount of time
+  a search takes is directly proportional to this parameter's value.
 
 Array filters
 -------------
