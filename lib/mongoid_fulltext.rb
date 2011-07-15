@@ -105,7 +105,7 @@ module Mongoid::FullTextSearch
       if (options[:return_scores])
         results.map { |result| [ instantiate_mapreduce_result(result), result['value']['score'] ] }.find_all { |result| ! result[0].nil? }
       else
-        results.map { |result| instantiate_mapreduce_result(result) }.find_all { |result| ! result.nil? }
+        results.map { |result| instantiate_mapreduce_result(result) }.compact
       end
     end
 
@@ -182,7 +182,7 @@ module Mongoid::FullTextSearch
           rescue 
             # Suppress any exceptions caused by filters
           end
-        end.find_all{ |x| !x.nil? }]
+        end.compact]
       end
       # insert new ngrams in external index
       ngrams.each_pair do |ngram, score|
