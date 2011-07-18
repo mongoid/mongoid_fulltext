@@ -36,13 +36,33 @@ module Mongoid::FullTextSearch
       config[:word_separators] = Hash[config[:word_separators].split('').map{ |ch| [ch,ch] }]
       self.mongoid_fulltext_config[index_name] = config
 
-      coll = collection.db.collection(index_name)
-      coll.ensure_index([['ngram', Mongo::ASCENDING]]) # needed to make lookups fast
-      coll.ensure_index([['score', Mongo::DESCENDING]]) # needed to sort by scores
-      coll.ensure_index([['document_id', Mongo::ASCENDING]]) # needed to make removes fast
+      ensure_indexes(index_name, config)
       
       before_save :update_ngram_index
       before_destroy :remove_from_ngram_index
+    end
+
+    def ensure_indexes(index_name, config)
+      db = collection.db
+      coll = db.collection(index_name)
+
+      filter_indexes = (config[:filters] || []).map do |key,value|
+        ["filter_values.#{key}", Mongo::ASCENDING]
+      end
+      index_definition = [['ngram', Mongo::ASCENDING], ['score', Mongo::DESCENDING]].concat(filter_indexes)
+
+      # Since the definition of the index could have changed, we'll clean up by
+      # removing any indexes that aren't on the exact 
+      correct_keys = index_definition.map{ |field_def| field_def[0] }
+      coll.index_information.each do |name, definition|
+        keys = definition['key'].keys
+        next if !keys.member?('ngram')
+        coll.drop_index(name) if keys & correct_keys != correct_keys
+        # TODO: accumulate the filter keys here, since the filters might be defined from multiple models
+      end
+
+      coll.ensure_index(index_definition, name: 'fts_index')
+      coll.ensure_index([['document_id', Mongo::ASCENDING]]) # to make removes fast
     end
 
     def fulltext_search(query_string, options={})
@@ -57,53 +77,59 @@ module Mongoid::FullTextSearch
       # options hash should only contain filters after this point      
       ngrams = all_ngrams(query_string, self.mongoid_fulltext_config[index_name])
       return [] if ngrams.empty?
-      
-      query = {'ngram' => {'$in' => ngrams.keys}}
-      query.update(Hash[options.map { |key,value| [ 'filter_values.%s' % key, { '$all' => [ value ].flatten } ] }])
-      map = <<-EOS
-        function() {
-          emit(this['document_id'], {'class': this['class'], 'score': this['score']*ngrams[this['ngram']] })
-        }
-      EOS
-      reduce = <<-EOS
-        function(key, values) {
-          score = 0.0
-          for (i in values) {
-            score += values[i]['score']
-          }
-          return({'class': values[0]['class'], 'score': score})
-        }
-      EOS
-      mr_options = { :scope => {:ngrams => ngrams }, 
-                     :query => query, 
-                     :raw => true, 
-                     :sort => { 'score' => -1 },
-                     :limit => options[:max_candidate_set_size]
-                    }
-      rc_options = { :return_scores => return_scores }
+
+      limit = options.has_key?(:limit) ? options.delete(:limit) : 1000
+      ordering = [['score', Mongo::DESCENDING]]
       coll = collection.db.collection(index_name)
-      if collection.db.connection.server_version >= '1.7.4'
-        mr_options[:out] = {:inline => 1}
-        results = coll.map_reduce(map, reduce, mr_options)['results'].sort_by{ |x| -x['value']['score'] }
-        max_results = results.count if max_results.nil?
-        instantiate_mapreduce_results(results.first(max_results), rc_options)
-      else
-        result_collection = coll.map_reduce(map, reduce, mr_options)['result']
-        results = collection.db.collection(result_collection).find.sort(['value.score',-1])
-        results = results.limit(max_results) if !max_results.nil?
-        models = instantiate_mapreduce_results(results, rc_options)
-        collection.db.collection(result_collection).drop
-        models
+      
+      cursors = ngrams.map do |ngram| 
+        query = {'ngram' => ngram[0]}
+        query.update(Hash[options.map { |key,value| [ 'filter_values.%s' % key, { '$all' => [ value ].flatten } ] }])
+        count = coll.find(query).count
+        {ngram: ngram, count: count, query: query}
+      end.sort_by!{ |record| record[:count] }
+
+      results_so_far = 0
+      candidates_list = cursors.map do |doc|
+        next if doc[:count] == 0
+        current_limit = limit
+        if results_so_far >= limit
+          current_limit = max_results
+        elsif doc[:count] > limit - results_so_far
+          current_limit = limit - results_so_far
+        end
+        results_so_far += doc[:count]
+        ngram_score = ngrams[doc[:ngram][0]]
+        cursor = coll.find(doc[:query], sort: ordering, limit: current_limit, batch_size: limit)
+        Hash[cursor.map do |candidate|
+               [candidate['document_id'], 
+                {clazz: candidate['class'], score: candidate['score'] * ngram_score}]
+             end]
+      end.compact
+      
+      all_scores = []
+      while !candidates_list.empty?
+        candidates = candidates_list.pop
+        scores = candidates.map do |candidate_id, data|
+          {id: candidate_id, 
+           clazz: data[:clazz], 
+           score: data[:score] + candidates_list.map{ |others| (others.delete(candidate_id) || {score: 0})[:score] }.sum
+           }
+        end
+        all_scores.concat(scores)
       end
+      all_scores.sort_by!{ |document| -document[:score] }
+
+      instantiate_mapreduce_results(all_scores[0..max_results-1], { :return_scores => return_scores })
     end
     
     def instantiate_mapreduce_result(result)
-      result['value']['class'].constantize.find(:first, :conditions => {:id => result['_id']})
+      result[:clazz].constantize.find(result[:id])
     end
     
     def instantiate_mapreduce_results(results, options)
       if (options[:return_scores])
-        results.map { |result| [ instantiate_mapreduce_result(result), result['value']['score'] ] }.find_all { |result| ! result[0].nil? }
+        results.map { |result| [ instantiate_mapreduce_result(result), result['score'] ] }.find_all { |result| ! result[0].nil? }
       else
         results.map { |result| instantiate_mapreduce_result(result) }.compact
       end
