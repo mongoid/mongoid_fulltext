@@ -327,6 +327,26 @@ module Mongoid
       end
 
     end
+
+    context "with different filters applied to multiple models" do
+      let!(:foo_artwork)    { FilteredArtwork.create(:title => 'foo') }
+      let!(:bar_artist)     { FilteredArtist.create(:full_name => 'bar') }
+      let!(:baz_other)      { FilteredOther.create(:name => 'baz') }
+
+      # These three models are all indexed by the same mongoid_fulltext index, but have different filters
+      # applied. The index created on the mongoid_fulltext collection should include the ngram and score
+      # fields as well as the union of all the filter fields to allow for efficient lookups.
+
+      it "creates a proper index for searching efficiently" do
+        index_collection = FilteredArtwork.collection.db.collection('mongoid_fulltext.artworks_and_artists')
+        ngram_indexes = index_collection.index_information.find_all{ |name, definition| definition['key'].has_key?('ngram') }
+        ngram_indexes.length.should == 1
+        keys = ngram_indexes.first[1]['key'].keys
+        expected_keys = ['ngram','score', 'filter_values.is_fuzzy', 'filter_values.is_awesome', 
+                         'filter_values.is_foobar', 'filter_values.is_artwork', 'filter_values.is_artist'].sort
+        keys.sort.should == expected_keys
+      end
+    end
     
     context "with partitions applied to a model" do
       
