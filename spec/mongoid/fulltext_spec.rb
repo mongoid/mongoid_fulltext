@@ -335,9 +335,11 @@ module Mongoid
       let!(:artist_0) { PartitionedArtist.create(:full_name => 'foobar', :exhibitions => [ ]) }
 
       it "allows partitioned searches" do
-        PartitionedArtist.fulltext_search('foobar').should == [ artist_2, artist_1, artist_0 ]
+        artists_by_exhibition_length = [ artist_0, artist_1, artist_2 ].sort_by{ |x| x.exhibitions.length }
+        PartitionedArtist.fulltext_search('foobar').sort_by{ |x| x.exhibitions.length }.should == artists_by_exhibition_length
         PartitionedArtist.fulltext_search('foobar', :exhibitions => [ "Armory NY" ]).should == [ artist_2 ]
-        PartitionedArtist.fulltext_search('foobar', :exhibitions => [ "Art Basel 2011" ]).should == [ artist_2, artist_1 ]
+        art_basel_only = PartitionedArtist.fulltext_search('foobar', :exhibitions => [ "Art Basel 2011" ]).sort_by{ |x| x.exhibitions.length }
+        art_basel_only.should == [ artist_1, artist_2 ].sort_by{ |x| x.exhibitions.length }
         PartitionedArtist.fulltext_search('foobar', :exhibitions => [ "Art Basel 2011", "Armory NY" ]).should == [ artist_2 ]
       end
 

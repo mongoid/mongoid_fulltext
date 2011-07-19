@@ -54,11 +54,17 @@ module Mongoid::FullTextSearch
       # Since the definition of the index could have changed, we'll clean up by
       # removing any indexes that aren't on the exact 
       correct_keys = index_definition.map{ |field_def| field_def[0] }
+      all_filter_keys = filter_indexes.map{ |field_def| field_def[0] }
       coll.index_information.each do |name, definition|
         keys = definition['key'].keys
         next if !keys.member?('ngram')
+        all_filter_keys |= keys.find_all{ |key| key.starts_with?('filter_values.') }
         coll.drop_index(name) if keys & correct_keys != correct_keys
-        # TODO: accumulate the filter keys here, since the filters might be defined from multiple models
+      end
+
+      if all_filter_keys.length > filter_indexes.length
+        filter_indexes = all_filter_keys.map { |key| ["filter_values.#{key}", Mongo::ASCENDING] }
+        index_definition = [['ngram', Mongo::ASCENDING], ['score', Mongo::DESCENDING]].concat(filter_indexes)        
       end
 
       coll.ensure_index(index_definition, name: 'fts_index')
@@ -124,12 +130,12 @@ module Mongoid::FullTextSearch
     end
     
     def instantiate_mapreduce_result(result)
-      result[:clazz].constantize.find(result[:id])
+      result[:clazz].constantize.find(:first, :conditions => {'_id' => result[:id]})
     end
     
     def instantiate_mapreduce_results(results, options)
       if (options[:return_scores])
-        results.map { |result| [ instantiate_mapreduce_result(result), result['score'] ] }.find_all { |result| ! result[0].nil? }
+        results.map { |result| [ instantiate_mapreduce_result(result), result[:score] ] }.find_all { |result| ! result[0].nil? }
       else
         results.map { |result| instantiate_mapreduce_result(result) }.compact
       end
@@ -160,7 +166,7 @@ module Mongoid::FullTextSearch
       if (config[:index_full_words])
         filtered_str.split(Regexp.compile(config[:word_separators].keys.join)).each do |word|
           if word.length >= config[:ngram_width]
-            ngram_ary << [ word, 2 ]
+            ngram_ary << [ word, 1 ]
           end
         end
       end
