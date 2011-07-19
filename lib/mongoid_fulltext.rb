@@ -79,47 +79,59 @@ module Mongoid::FullTextSearch
         raise UnspecifiedIndexError, error_message % self.name, caller
       end
       index_name = options.has_key?(:index) ? options.delete(:index) : self.mongoid_fulltext_config.keys.first
-      
-      # options hash should only contain filters after this point      
+
+      # Options hash should only contain filters after this point
+
       ngrams = all_ngrams(query_string, self.mongoid_fulltext_config[index_name])
       return [] if ngrams.empty?
 
-      limit = options.has_key?(:limit) ? options.delete(:limit) : 1000
+      # For each ngram, construct the query we'll use to pull index documents and 
+      # get a count of the number of index documents containing that n-gram
       ordering = [['score', Mongo::DESCENDING]]
+      limit = self.mongoid_fulltext_config[index_name][:max_candidate_set_size]
       coll = collection.db.collection(index_name)
-      
       cursors = ngrams.map do |ngram| 
         query = {'ngram' => ngram[0]}
         query.update(Hash[options.map { |key,value| [ 'filter_values.%s' % key, { '$all' => [ value ].flatten } ] }])
         count = coll.find(query).count
-        {ngram: ngram, count: count, query: query}
+        {:ngram => ngram, :count => count, :query => query}
       end.sort_by!{ |record| record[:count] }
 
+      # Using the queries we just constructed and the n-gram frequency counts we
+      # just computed, pull in about *:max_candidate_set_size* candidates by 
+      # considering the n-grams in order of increasing frequency. When we've 
+      # spent all *:max_candidate_set_size* candidates, pull the top-scoring 
+      # *max_results* candidates for each remaining n-gram.
       results_so_far = 0
       candidates_list = cursors.map do |doc|
         next if doc[:count] == 0
-        current_limit = limit
+        query_options = {}
         if results_so_far >= limit
-          current_limit = max_results
+          query_options = {:sort => ordering, :limit => max_results}
         elsif doc[:count] > limit - results_so_far
-          current_limit = limit - results_so_far
+          query_options = {:sort => ordering, :limit => limit - results_so_far}
         end
         results_so_far += doc[:count]
         ngram_score = ngrams[doc[:ngram][0]]
-        cursor = coll.find(doc[:query], sort: ordering, limit: current_limit, batch_size: limit)
-        Hash[cursor.map do |candidate|
+        Hash[coll.find(doc[:query], query_options).map do |candidate|
                [candidate['document_id'], 
                 {clazz: candidate['class'], score: candidate['score'] * ngram_score}]
              end]
       end.compact
       
+      # Finally, score all candidates by matching them up with other candidates that are
+      # associated with the same document. This is similar to how you might process a
+      # boolean AND query, except that with an AND query, you'd stop after considering
+      # the first candidate list and matching its candidates up with candidates from other
+      # lists, whereas here we want the search to be a little fuzzier so we'll run through
+      # all candidate lists, removing candidates as we match them up.
       all_scores = []
       while !candidates_list.empty?
         candidates = candidates_list.pop
         scores = candidates.map do |candidate_id, data|
-          {id: candidate_id, 
-           clazz: data[:clazz], 
-           score: data[:score] + candidates_list.map{ |others| (others.delete(candidate_id) || {score: 0})[:score] }.sum
+          {:id => candidate_id, 
+           :clazz => data[:clazz], 
+           :score => data[:score] + candidates_list.map{ |others| (others.delete(candidate_id) || {score: 0})[:score] }.sum
            }
         end
         all_scores.concat(scores)
