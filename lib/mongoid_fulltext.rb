@@ -54,7 +54,7 @@ module Mongoid::FullTextSearch
       # Since the definition of the index could have changed, we'll clean up by
       # removing any indexes that aren't on the exact 
       correct_keys = index_definition.map{ |field_def| field_def[0] }
-      all_filter_keys = filter_indexes.map{ |field_def| field_def[0] }
+      all_filter_keys = filter_indexes.map{ |field_def| "filter_values.#{field_def[0]}" }
       coll.index_information.each do |name, definition|
         keys = definition['key'].keys
         next if !keys.member?('ngram')
@@ -63,7 +63,7 @@ module Mongoid::FullTextSearch
       end
 
       if all_filter_keys.length > filter_indexes.length
-        filter_indexes = all_filter_keys.map { |key| ["filter_values.#{key}", Mongo::ASCENDING] }
+        filter_indexes = all_filter_keys.map { |key| [key, Mongo::ASCENDING] }
         index_definition = [['ngram', Mongo::ASCENDING], ['score', Mongo::DESCENDING]].concat(filter_indexes)        
       end
 
