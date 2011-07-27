@@ -67,8 +67,8 @@ module Mongoid::FullTextSearch
         index_definition = [['ngram', Mongo::ASCENDING], ['score', Mongo::DESCENDING]].concat(filter_indexes)        
       end
 
-      coll.ensure_index(index_definition, { name: 'fts_index', background: true })
-      coll.ensure_index([['document_id', Mongo::ASCENDING]], { background: true }) # to make removes fast
+      coll.ensure_index(index_definition, { :name => 'fts_index', :background => true })
+      coll.ensure_index([['document_id', Mongo::ASCENDING]], { :background => true }) # to make removes fast
     end
 
     def fulltext_search(query_string, options={})
