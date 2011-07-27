@@ -61,16 +61,22 @@ module Mongoid::FullTextSearch
         keys = definition['key'].keys
         next if !keys.member?('ngram')
         all_filter_keys |= keys.find_all{ |key| key.starts_with?('filter_values.') }
-        coll.drop_index(name) if keys & correct_keys != correct_keys
+        if keys & correct_keys != correct_keys
+          puts "droping #{name} [#{keys & correct_keys} vs. #{correct_keys}]"
+          coll.drop_index(name)
+        end
       end
 
       if all_filter_keys.length > filter_indexes.length
-        filter_indexes = all_filter_keys.map { |key| [key, Mongo::ASCENDING] }
+        filter_indexes = all_filter_keys.map { |key| [key, Mongo::ASCENDING] }.sort_by { |filter_index| filter_index[0] }
         index_definition = [['ngram', Mongo::ASCENDING], ['score', Mongo::DESCENDING]].concat(filter_indexes)        
       end
 
+      puts "ensure_index: #{coll.name} => #{index_definition}"
       coll.ensure_index(index_definition, { :name => 'fts_index', :background => true })
+      puts "ensure_index: #{coll.name} => document_id"
       coll.ensure_index([['document_id', Mongo::ASCENDING]], { :background => true }) # to make removes fast
+      puts "done: #{coll.name}"
     end
 
     def fulltext_search(query_string, options={})
