@@ -46,13 +46,15 @@ module Mongoid::FullTextSearch
       db = collection.db
       coll = db.collection(index_name)
 
+      # The order of filters matters when the same index is used from two or more collections.
       filter_indexes = (config[:filters] || []).map do |key,value|
         ["filter_values.#{key}", Mongo::ASCENDING]
-      end
+      end.sort_by { |filter_index| filter_index[0] }
+      
       index_definition = [['ngram', Mongo::ASCENDING], ['score', Mongo::DESCENDING]].concat(filter_indexes)
 
       # Since the definition of the index could have changed, we'll clean up by
-      # removing any indexes that aren't on the exact 
+      # removing any indexes that aren't on the exact.
       correct_keys = index_definition.map{ |field_def| field_def[0] }
       all_filter_keys = filter_indexes.map{ |field_def| field_def[0] }
       coll.index_information.each do |name, definition|
