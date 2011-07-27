@@ -8,6 +8,7 @@ require 'database_cleaner'
 Mongoid.configure do |config|
   name = "mongoid_fulltext_test"
   config.master = Mongo::Connection.new.db(name)
+  config.logger = Logger.new('/dev/null')
 end
 
 require File.expand_path("../../lib/mongoid_fulltext", __FILE__)
