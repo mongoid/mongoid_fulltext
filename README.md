@@ -261,6 +261,17 @@ method:
 The methods on the model level perform bulk removal operations and are therefore faster that 
 updating or removing records individually.
 
+Mongo Database Indexes
+----------------------
+
+Mongoid provides an indexing mechanism on its models triggered by the `create_indexes` method.
+Mongoid_fulltext will hook into that behavior and create appropriate database indexes on its
+collections. These indexes are required for an efficient full text search. 
+
+Creating database indexes is typically done with the `db:mongoid:create_indexes` task.
+
+    rake db:mongoid:create_indexes
+
 Running the specs
 -----------------
 
