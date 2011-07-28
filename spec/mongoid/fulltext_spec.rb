@@ -443,6 +443,7 @@ module Mongoid
       end
 
       context "mongoid indexes" do
+      
         it "can re-create dropped indexes" do
           # there're no indexes by default as Mongoid.autocreate_indexes is set to false
           # but mongo will automatically attempt to index _id in the background
@@ -469,6 +470,10 @@ module Mongoid
               "v"=>0 
             }
           }
+        end
+        
+        it "doesn't fail on models that don't have a fulltext index" do
+          HiddenDragon.create_indexes
         end
         
       end

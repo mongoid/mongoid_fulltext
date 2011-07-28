@@ -43,6 +43,7 @@ module Mongoid::FullTextSearch
     end
     
     def create_fulltext_indexes
+      return unless self.mongoid_fulltext_config
       self.mongoid_fulltext_config.each_pair do |index_name, fulltext_config|
         fulltext_search_ensure_indexes(index_name, fulltext_config)
       end
