@@ -1,3 +1,5 @@
+require 'mongoid_indexes'
+
 module Mongoid::FullTextSearch
   extend ActiveSupport::Concern
 
@@ -35,14 +37,18 @@ module Mongoid::FullTextSearch
       config[:alphabet] = Hash[config[:alphabet].split('').map{ |ch| [ch,ch] }]
       config[:word_separators] = Hash[config[:word_separators].split('').map{ |ch| [ch,ch] }]
       self.mongoid_fulltext_config[index_name] = config
-
-      ensure_indexes(index_name, config)
       
       before_save :update_ngram_index
       before_destroy :remove_from_ngram_index
     end
+    
+    def create_fulltext_indexes
+      self.mongoid_fulltext_config.each_pair do |index_name, fulltext_config|
+        fulltext_search_ensure_indexes(index_name, fulltext_config)
+      end
+    end
 
-    def ensure_indexes(index_name, config)
+    def fulltext_search_ensure_indexes(index_name, config)
       db = collection.db
       coll = db.collection(index_name)
 
@@ -62,7 +68,7 @@ module Mongoid::FullTextSearch
         next if !keys.member?('ngram')
         all_filter_keys |= keys.find_all{ |key| key.starts_with?('filter_values.') }
         if keys & correct_keys != correct_keys
-          fulltext_log "Droping #{name} [#{keys & correct_keys} <=> #{correct_keys}]"
+          Mongoid.logger.info "Droping #{name} [#{keys & correct_keys} <=> #{correct_keys}]"
           coll.drop_index(name)
         end
       end
@@ -71,17 +77,13 @@ module Mongoid::FullTextSearch
         filter_indexes = all_filter_keys.map { |key| [key, Mongo::ASCENDING] }.sort_by { |filter_index| filter_index[0] }
         index_definition = [['ngram', Mongo::ASCENDING], ['score', Mongo::DESCENDING]].concat(filter_indexes)        
       end
-
-      fulltext_log "Ensuring fts_index on #{coll.name}: #{index_definition}"
-      coll.ensure_index(index_definition, { :name => 'fts_index', :background => true })
-      fulltext_log "Ensuring document_id index on #{coll.name}"
-      coll.ensure_index([['document_id', Mongo::ASCENDING]], { :background => true }) # to make removes fast
+      
+      Mongoid.logger.info "Ensuring fts_index on #{coll.name}: #{index_definition}"
+      coll.ensure_index(index_definition, { :name => 'fts_index' })
+      Mongoid.logger.info "Ensuring document_id index on #{coll.name}"
+      coll.ensure_index([['document_id', Mongo::ASCENDING]]) # to make removes fast
     end
     
-    def fulltext_log(message)
-      Mongoid.logger.info("[mongoid_fulltext] #{message}") if Mongoid.logger
-    end
-
     def fulltext_search(query_string, options={})
       max_results = options.has_key?(:max_results) ? options.delete(:max_results) : 10
       return_scores = options.has_key?(:return_scores) ? options.delete(:return_scores) : false

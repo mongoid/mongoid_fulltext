@@ -3,7 +3,6 @@ require 'bundler/setup'
 require 'rspec'
 
 require 'mongoid'
-require 'database_cleaner'
 
 Mongoid.configure do |config|
   name = "mongoid_fulltext_test"
@@ -15,8 +14,11 @@ require File.expand_path("../../lib/mongoid_fulltext", __FILE__)
 Dir["#{File.dirname(__FILE__)}/models/**/*.rb"].each { |f| require f }
 
 Rspec.configure do |c|
-  c.before(:all)  { DatabaseCleaner.strategy = :truncation }
-  c.before(:each) { DatabaseCleaner.clean }
-  c.after(:all) { Mongoid.master.command({'repairDatabase' => 1}) }
+  c.before(:each) do
+    Mongoid.master.collections.select {|c| c.name !~ /system/ }.each(&:drop)
+  end
+  c.after(:all) do 
+    Mongoid.master.command({'dropDatabase' => 1})
+  end
 end
 
