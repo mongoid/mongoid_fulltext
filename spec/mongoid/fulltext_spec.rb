@@ -16,6 +16,7 @@ module Mongoid
       end
 
     end
+    
     context "with default settings" do
       
       let!(:flower_myth) { BasicArtwork.create(:title => 'Flower Myth') }
@@ -125,6 +126,7 @@ module Mongoid
       end
 
     end
+    
     context "with an index name specified" do
       let!(:pablo_picasso)       { ExternalArtist.create(:full_name => 'Pablo Picasso') }
       let!(:portrait_of_picasso) { ExternalArtwork.create(:title => 'Portrait of Picasso') }
@@ -188,6 +190,7 @@ module Mongoid
       end
 
     end
+    
     context "with an index name specified" do
 
       let!(:andy_warhol)         { ExternalArtist.create(:full_name => 'Andy Warhol') }
@@ -202,6 +205,7 @@ module Mongoid
       end
       
     end
+    
     context "with an index name specified" do
 
       let!(:pop)                { ExternalArtwork.create(:title => 'Pop') }
@@ -237,6 +241,7 @@ module Mongoid
       end
 
     end
+    
     context "with an index name specified" do
 
       it "cleans up item from the index after they're destroyed" do
@@ -250,6 +255,7 @@ module Mongoid
       end
 
     end
+    
     context "with an index name specified and no fields provided to index" do
 
       let!(:big_bang) { ExternalArtworkNoFieldsSupplied.create(:title => 'Big Bang', :artist => 'David Poppie', :year => '2009') }
@@ -261,6 +267,7 @@ module Mongoid
       end
 
     end
+    
     context "with multiple indexes defined" do
       
       let!(:pop)                { MultiExternalArtwork.create(:title => 'Pop', :year => '1970', :artist => 'Joe Schmoe') }
@@ -282,6 +289,7 @@ module Mongoid
       end
 
     end
+    
     context "with multiple fields indexed and the same index used by multiple models" do
       
       let!(:andy_warhol)         { MultiFieldArtist.create(:full_name => 'Andy Warhol', :birth_year => '1928') }
@@ -338,6 +346,9 @@ module Mongoid
       # fields as well as the union of all the filter fields to allow for efficient lookups.
 
       it "creates a proper index for searching efficiently" do
+        [ FilteredArtwork, FilteredArtist, FilteredOther].each do |klass| 
+          klass.create_indexes
+        end
         index_collection = FilteredArtwork.collection.db.collection('mongoid_fulltext.artworks_and_artists')
         ngram_indexes = index_collection.index_information.find_all{ |name, definition| definition['key'].has_key?('ngram') }
         ngram_indexes.length.should == 1
@@ -431,7 +442,37 @@ module Mongoid
         
       end
 
+      context "mongoid indexes" do
+        it "can re-create dropped indexes" do
+          # there're no indexes by default as Mongoid.autocreate_indexes is set to false
+          # but mongo will automatically attempt to index _id in the background
+          Mongoid.master["mongoid_fulltext.index_basicartwork_0"].index_information.size.should <= 1
+          BasicArtwork.create_indexes
+          Mongoid.master["mongoid_fulltext.index_basicartwork_0"].index_information.should == 
+          { 
+            "_id_" => { 
+              "name" => "_id_", 
+              "ns" => "mongoid_fulltext_test.mongoid_fulltext.index_basicartwork_0", 
+              "key" => { "_id" => 1 }, 
+              "v" => 0
+            }, 
+            "fts_index" => { 
+              "name" => "fts_index", 
+              "ns" => "mongoid_fulltext_test.mongoid_fulltext.index_basicartwork_0", 
+              "key" => { "ngram" => 1, "score" => -1 }, 
+              "v" => 0
+            }, 
+            "document_id_1" => {
+              "name" => "document_id_1", 
+              "ns" => "mongoid_fulltext_test.mongoid_fulltext.index_basicartwork_0", 
+              "key" => { "document_id" => 1 }, 
+              "v"=>0 
+            }
+          }
+        end
+        
+      end
+
     end
-    
   end
 end
