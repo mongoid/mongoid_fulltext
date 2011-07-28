@@ -473,7 +473,7 @@ module Mongoid
         end
         
         it "doesn't fail on models that don't have a fulltext index" do
-          HiddenDragon.create_indexes
+          lambda { HiddenDragon.create_indexes }.should_not raise_error
         end
         
       end
