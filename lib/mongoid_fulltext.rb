@@ -108,7 +108,7 @@ module Mongoid::FullTextSearch
         query.update(Hash[options.map { |key,value| [ 'filter_values.%s' % key, { '$all' => [ value ].flatten } ] }])
         count = coll.find(query).count
         {:ngram => ngram, :count => count, :query => query}
-      end.sort_by!{ |record| record[:count] }
+      end.sort!{ |record1, record2| record1[:count] <=> record2[:count] }
 
       # Using the queries we just constructed and the n-gram frequency counts we
       # just computed, pull in about *:max_candidate_set_size* candidates by 
@@ -128,7 +128,7 @@ module Mongoid::FullTextSearch
         ngram_score = ngrams[doc[:ngram][0]]
         Hash[coll.find(doc[:query], query_options).map do |candidate|
                [candidate['document_id'], 
-                {clazz: candidate['class'], score: candidate['score'] * ngram_score}]
+                {:clazz => candidate['class'], :score => candidate['score'] * ngram_score}]
              end]
       end.compact
       
@@ -144,12 +144,12 @@ module Mongoid::FullTextSearch
         scores = candidates.map do |candidate_id, data|
           {:id => candidate_id, 
            :clazz => data[:clazz], 
-           :score => data[:score] + candidates_list.map{ |others| (others.delete(candidate_id) || {score: 0})[:score] }.sum
+           :score => data[:score] + candidates_list.map{ |others| (others.delete(candidate_id) || {:score => 0})[:score] }.sum
            }
         end
         all_scores.concat(scores)
       end
-      all_scores.sort_by!{ |document| -document[:score] }
+      all_scores.sort!{ |document1, document2| -document1[:score] <=> -document2[:score] }
 
       instantiate_mapreduce_results(all_scores[0..max_results-1], { :return_scores => return_scores })
     end

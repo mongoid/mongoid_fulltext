@@ -3,7 +3,7 @@ class PartitionedArtist
   include Mongoid::FullTextSearch
   
   field :full_name
-  field :exhibitions, type: Array, default: []
+  field :exhibitions, :type => Array, :default => []
   
   fulltext_search_in :full_name, 
     :index_name => 'mongoid_fulltext.partitioned_artists',
