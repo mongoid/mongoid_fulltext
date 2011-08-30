@@ -6,6 +6,8 @@ module Mongoid
     context "with several config options defined" do
 
       let!(:abcdef) { AdvancedArtwork.create(:title => 'abcdefg hijklmn') }
+      let!(:cesar) { AccentlessArtwork.create(:title => "C\u00e9sar Galicia") }
+      let!(:julio) { AccentlessArtwork.create(:title => "Julio Cesar Morales") } 
 
       it "should recognize all options" do
         # AdvancedArtwork is defined with an ngram_width of 4 and a different alphabet (abcdefg)
@@ -13,6 +15,9 @@ module Mongoid
         AdvancedArtwork.fulltext_search('abcd').first.should == abcdef
         AdvancedArtwork.fulltext_search('defg').first.should == abcdef
         AdvancedArtwork.fulltext_search('hijklmn').should == []
+        # AccentlessArtwork is just like BasicArtwork, except that we set :remove_accents to false,
+        # so this behaves like the ``old'' version of fulltext_search
+        AccentlessArtwork.fulltext_search("cesar").first.should == julio
       end
 
     end
@@ -24,6 +29,15 @@ module Mongoid
       let!(:lowered)     { BasicArtwork.create(:title => 'Lowered') }
       let!(:cookies)     { BasicArtwork.create(:title => 'Cookies') }
       let!(:empty)       { BasicArtwork.create(:title => '') }
+      let!(:cesar) { BasicArtwork.create(:title => "C\303\251sar Galicia") }
+      let!(:julio) { BasicArtwork.create(:title => "Julio Cesar Morales") }
+      let!(:csar) { BasicArtwork.create(:title => "Csar") }
+
+      it "forgets accents" do
+        BasicArtwork.fulltext_search('cesar', :max_results => 1).first.should == cesar
+        BasicArtwork.fulltext_search('cesar g', :max_results => 1).first.should == cesar
+        BasicArtwork.fulltext_search("C\u00e9sar", :max_results => 1).first.should == cesar
+      end
 
       it "returns exact matches" do
         BasicArtwork.fulltext_search('Flower Myth', :max_results => 1).first.should == flower_myth
