@@ -1,4 +1,5 @@
 require 'mongoid_indexes'
+require 'remove_accents_ascii'
 
 module Mongoid::FullTextSearch
   extend ActiveSupport::Concern
@@ -28,6 +29,7 @@ module Mongoid::FullTextSearch
         :apply_prefix_scoring_to_all_words => true,
         :index_full_words => true,
         :max_candidate_set_size => 1000
+        :remove_accents => true
       }
       
       config.update(options)
@@ -169,6 +171,11 @@ module Mongoid::FullTextSearch
     # returns an [ngram, score] [ngram, position] pair
     def all_ngrams(str, config, bound_number_returned = true)
       return {} if str.nil? or str.length < config[:ngram_width]
+
+      if config[:remove_accents]
+        RemoveAccentsAscii.remove_accents!(str)
+      end
+
       filtered_str = str.downcase.split('').map{ |ch| config[:alphabet][ch] }.compact.join('')
       
       if bound_number_returned
