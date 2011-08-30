@@ -9,4 +9,5 @@ group :development do
   gem "mongoid", "~> 2.0.0"
   gem 'rspec', '~> 2.5.0' 
   gem "jeweler", "~> 1.5.2"
+  gem "unicode_utils", "~> 1.0.0"
 end
