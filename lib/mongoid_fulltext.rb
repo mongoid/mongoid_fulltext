@@ -28,7 +28,7 @@ module Mongoid::FullTextSearch
         :max_ngrams_to_search => 6,
         :apply_prefix_scoring_to_all_words => true,
         :index_full_words => true,
-        :max_candidate_set_size => 1000
+        :max_candidate_set_size => 1000,
         :remove_accents => true
       }
       
