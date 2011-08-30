@@ -173,16 +173,17 @@ module Mongoid::FullTextSearch
     def all_ngrams(str, config, bound_number_returned = true)
       return {} if str.nil? or str.length < config[:ngram_width]
 
+      filtered_str = String.new(str)
       if config[:remove_accents]
         case str.encoding.name
         when "ASCII-8BIT"
-          RemoveAccentsAscii.remove_accents!(str)
+          RemoveAccentsAscii.remove_accents!(filtered_str)
         when "UTF-8"
-          str = UnicodeUtils.nfkd(str).gsub(/[^\x00-\x7F]/,'').to_s
+          filtered_str = UnicodeUtils.nfkd(filtered_str).gsub(/[^\x00-\x7F]/,'').to_s
         end
       end
 
-      filtered_str = str.downcase.split('').map{ |ch| config[:alphabet][ch] }.compact.join('')
+      filtered_str = filtered_str.downcase.split('').map{ |ch| config[:alphabet][ch] }.compact.join('')
       
       if bound_number_returned
         step_size = [((filtered_str.length - config[:ngram_width]).to_f / config[:max_ngrams_to_search]).ceil, 1].max
