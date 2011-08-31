@@ -175,7 +175,7 @@ module Mongoid::FullTextSearch
       filtered_str = String.new(str)
       if config[:remove_accents]
         if str.encoding.name == "ASCII-8BIT"
-          RemoveAccentsAscii.remove_accents!(filtered_str)
+          filtered_str = CGI.unescapeHTML(filtered_str)
         end
         filtered_str = UnicodeUtils.nfkd(filtered_str).gsub(/[^\x00-\x7F]/,'').to_s
       end
