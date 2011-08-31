@@ -37,6 +37,8 @@ module Mongoid
         BasicArtwork.fulltext_search('cesar', :max_results => 1).first.should == cesar
         BasicArtwork.fulltext_search('cesar g', :max_results => 1).first.should == cesar
         BasicArtwork.fulltext_search("C\u00e9sar", :max_results => 1).first.should == cesar
+        BasicArtwork.fulltext_search("C\303\251sar", :max_results => 1).first.should == cesar
+        BasicArtwork.fulltext_search("c%C3%A9sar".encode("ASCII-8BIT"), :max_results => 1).first.should == cesar
       end
 
       it "returns exact matches" do
