@@ -213,8 +213,8 @@ Additional indexing/query options can be used as parameters to `fulltext_search_
   a search takes is directly proportional to this parameter's value.
 * `remove_accents`: remove accents on accented characters or not. Defaults to true.  If a string 
   is encoded in UTF-8, we strip the accents using NFKD normalization (via an external library, 
-  ``unicode_utils''. If a string is encoded in ASCII-8BIT, we assume it has been passed via a
-  URL, for instance we might have "%C3%A9" which is how an ``e-accute'' (``é'') gets passed
+  "unicode_utils". If a string is encoded in ASCII-8BIT, we assume it has been passed via a
+  URL, for instance we might have "%C3%A9" which is how an "e-accute" ("é") gets passed
   through a web-browser. These are then changed to their UTF-8 equivalents (via the CGI gem) 
   and then finally stripped, as before.
 
