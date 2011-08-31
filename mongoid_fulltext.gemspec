@@ -5,10 +5,10 @@
 
 Gem::Specification.new do |s|
   s.name = %q{mongoid_fulltext}
-  s.version = "0.4.3"
+  s.version = "0.4.4"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
-  s.authors = [%q{Aaron Windsor}]
+  s.authors = ["Aaron Windsor"]
   s.date = %q{2011-08-31}
   s.description = %q{Full-text search for the Mongoid ORM, using n-grams extracted from text}
   s.email = %q{aaron.windsor@gmail.com}
@@ -37,6 +37,7 @@ Gem::Specification.new do |s|
     "spec/models/filtered_artwork.rb",
     "spec/models/filtered_other.rb",
     "spec/models/gallery/basic_artwork.rb",
+    "spec/models/hidden_dragon.rb",
     "spec/models/multi_external_artwork.rb",
     "spec/models/multi_field_artist.rb",
     "spec/models/multi_field_artwork.rb",
@@ -45,9 +46,9 @@ Gem::Specification.new do |s|
     "spec/spec_helper.rb"
   ]
   s.homepage = %q{http://github.com/aaw/mongoid_fulltext}
-  s.licenses = [%q{MIT}]
-  s.require_paths = [%q{lib}]
-  s.rubygems_version = %q{1.8.6}
+  s.licenses = ["MIT"]
+  s.require_paths = ["lib"]
+  s.rubygems_version = %q{1.6.2}
   s.summary = %q{Full-text search for the Mongoid ORM}
   s.test_files = [
     "spec/models/accentless_artwork.rb",
@@ -60,6 +61,7 @@ Gem::Specification.new do |s|
     "spec/models/filtered_artwork.rb",
     "spec/models/filtered_other.rb",
     "spec/models/gallery/basic_artwork.rb",
+    "spec/models/hidden_dragon.rb",
     "spec/models/multi_external_artwork.rb",
     "spec/models/multi_field_artist.rb",
     "spec/models/multi_field_artwork.rb",
@@ -74,17 +76,20 @@ Gem::Specification.new do |s|
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<unicode_utils>, ["~> 1.0.0"])
       s.add_development_dependency(%q<mongoid>, ["~> 2.0.0"])
+      s.add_development_dependency(%q<bson_ext>, ["~> 1.3.0"])
       s.add_development_dependency(%q<rspec>, ["~> 2.5.0"])
       s.add_development_dependency(%q<jeweler>, ["~> 1.5.2"])
     else
       s.add_dependency(%q<unicode_utils>, ["~> 1.0.0"])
       s.add_dependency(%q<mongoid>, ["~> 2.0.0"])
+      s.add_dependency(%q<bson_ext>, ["~> 1.3.0"])
       s.add_dependency(%q<rspec>, ["~> 2.5.0"])
       s.add_dependency(%q<jeweler>, ["~> 1.5.2"])
     end
   else
     s.add_dependency(%q<unicode_utils>, ["~> 1.0.0"])
     s.add_dependency(%q<mongoid>, ["~> 2.0.0"])
+    s.add_dependency(%q<bson_ext>, ["~> 1.3.0"])
     s.add_dependency(%q<rspec>, ["~> 2.5.0"])
     s.add_dependency(%q<jeweler>, ["~> 1.5.2"])
   end
