@@ -177,7 +177,7 @@ module Mongoid::FullTextSearch
         if str.encoding.name == "ASCII-8BIT"
           filtered_str = CGI.unescape(filtered_str)
         end
-        filtered_str = UnicodeUtils.nfkd(filtered_str).gsub(/[^\x00-\x7F]/,'').to_s
+        filtered_str = UnicodeUtils.nfkd(filtered_str).gsub(/[^\x00-\x7F]/,'')
       end
 
       filtered_str = filtered_str.downcase.split('').map{ |ch| config[:alphabet][ch] }.compact.join('')
