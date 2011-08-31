@@ -1,5 +1,4 @@
 require 'mongoid_indexes'
-require 'remove_accents_ascii'
 require 'unicode_utils'
 
 module Mongoid::FullTextSearch
@@ -175,12 +174,10 @@ module Mongoid::FullTextSearch
 
       filtered_str = String.new(str)
       if config[:remove_accents]
-        case str.encoding.name
-        when "ASCII-8BIT"
+        if str.encoding.name == "ASCII-8BIT"
           RemoveAccentsAscii.remove_accents!(filtered_str)
-        when "UTF-8"
-          filtered_str = UnicodeUtils.nfkd(filtered_str).gsub(/[^\x00-\x7F]/,'').to_s
         end
+        filtered_str = UnicodeUtils.nfkd(filtered_str).gsub(/[^\x00-\x7F]/,'').to_s
       end
 
       filtered_str = filtered_str.downcase.split('').map{ |ch| config[:alphabet][ch] }.compact.join('')
