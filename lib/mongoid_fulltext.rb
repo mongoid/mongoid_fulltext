@@ -1,4 +1,5 @@
 require 'mongoid_indexes'
+require 'unicode_utils'
 
 module Mongoid::FullTextSearch
   extend ActiveSupport::Concern
@@ -27,7 +28,8 @@ module Mongoid::FullTextSearch
         :max_ngrams_to_search => 6,
         :apply_prefix_scoring_to_all_words => true,
         :index_full_words => true,
-        :max_candidate_set_size => 1000
+        :max_candidate_set_size => 1000,
+        :remove_accents => true
       }
       
       config.update(options)
@@ -169,7 +171,16 @@ module Mongoid::FullTextSearch
     # returns an [ngram, score] [ngram, position] pair
     def all_ngrams(str, config, bound_number_returned = true)
       return {} if str.nil? or str.length < config[:ngram_width]
-      filtered_str = str.downcase.split('').map{ |ch| config[:alphabet][ch] }.compact.join('')
+
+      filtered_str = String.new(str)
+      if config[:remove_accents]
+        if str.encoding.name == "ASCII-8BIT"
+          filtered_str = CGI.unescape(filtered_str)
+        end
+        filtered_str = UnicodeUtils.nfkd(filtered_str).gsub(/[^\x00-\x7F]/,'')
+      end
+
+      filtered_str = filtered_str.downcase.split('').map{ |ch| config[:alphabet][ch] }.compact.join('')
       
       if bound_number_returned
         step_size = [((filtered_str.length - config[:ngram_width]).to_f / config[:max_ngrams_to_search]).ceil, 1].max
