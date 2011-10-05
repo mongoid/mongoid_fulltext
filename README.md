@@ -217,6 +217,12 @@ Additional indexing/query options can be used as parameters to `fulltext_search_
   URL, for instance we might have "%C3%A9" which is how an "e-accute" ("é") gets passed
   through a web-browser. These are then changed to their UTF-8 equivalents (via the `CGI` gem) 
   and then finally stripped, as before.
+* `update_if`: controls whether or not the index will be updated. This can be set to a symbol,
+  string, or proc. If the result of evaluating the value is true, the index will be updated.
+** When set to a symbol, the symbol is sent to the document.
+** When set to a string, the string is evaluated within the document's instance.
+** When set to a proc, the proc is called, and the document is given to the proc as the first arg.
+** When set to any other type of object, the document's index will not be updated.
 
 Array filters
 -------------
@@ -266,6 +272,18 @@ method:
 
 The methods on the model level perform bulk removal operations and are therefore faster that 
 updating or removing records individually.
+
+If you need to control when the index is updated, provide the `update_if` option to
+`fulltext_search_in`, and set it to a symbol, string, or proc. Eg:
+
+    # Only update the "age" index if the "age" field has changed.
+    fulltext_search_in :age,    :update_if => :age_changed?
+
+    # Only update the "names" index if the "firstname" or "lastname" field has changed.
+    fulltext_search_in :names,  :update_if => "firstname_changed? || lastname_changed?"
+
+    # Only update the "email" index if the "email" field ends with "gmail.com".
+    fulltext_search_in :email,  :update_if => Proc.new { |doc| doc.email.match /gmail.com\Z/ }
 
 Mongo Database Indexes
 ----------------------
