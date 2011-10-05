@@ -219,10 +219,10 @@ Additional indexing/query options can be used as parameters to `fulltext_search_
   and then finally stripped, as before.
 * `update_if`: controls whether or not the index will be updated. This can be set to a symbol,
   string, or proc. If the result of evaluating the value is true, the index will be updated.
-** When set to a symbol, the symbol is sent to the document.
-** When set to a string, the string is evaluated within the document's instance.
-** When set to a proc, the proc is called, and the document is given to the proc as the first arg.
-** When set to any other type of object, the document's index will not be updated.
+    * When set to a symbol, the symbol is sent to the document.
+    * When set to a string, the string is evaluated within the document's instance.
+    * When set to a proc, the proc is called, and the document is given to the proc as the first arg.
+    * When set to any other type of object, the document's index will not be updated.
 
 Array filters
 -------------
