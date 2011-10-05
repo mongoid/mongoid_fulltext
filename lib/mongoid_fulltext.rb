@@ -235,6 +235,15 @@ module Mongoid::FullTextSearch
 
   def update_ngram_index
     self.mongoid_fulltext_config.each_pair do |index_name, fulltext_config|
+      if condition = fulltext_config[:update_if]
+        case condition
+        when Symbol;  next unless self.send condition
+        when String;  next unless instance_eval condition
+        when Proc;    next unless condition.call self
+        else;         next
+        end
+      end
+
       # remove existing ngrams from external index
       coll = collection.db.collection(index_name)
       coll.remove({'document_id' => self._id})
