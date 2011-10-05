@@ -429,6 +429,84 @@ module Mongoid
       let!(:flowers1)     { BasicArtwork.create(:title => 'Flowers 1') }
       let!(:flowers2)     { BasicArtwork.create(:title => 'Flowers 2') }
 
+      context "when config[:update_if] exists" do
+
+        let(:painting)          { BasicArtwork.new :title => 'Painting' }
+        let(:conditional_index) { BasicArtwork.mongoid_fulltext_config["mongoid_fulltext.index_conditional"] }
+
+        before(:all) do
+          BasicArtwork.class_eval do
+            fulltext_search_in :title, :index_name => "mongoid_fulltext.index_conditional"
+          end
+        end
+
+        after(:all) do
+          Mongoid.master["mongoid_fulltext.index_conditional"].remove
+          BasicArtwork.mongoid_fulltext_config.delete "mongoid_fulltext.index_conditional"
+        end
+
+        context "and is a symbol" do
+
+          before(:all) do
+            conditional_index[:update_if] = :persisted?
+          end
+
+          context "when sending the symbol to the document evaluates to false" do
+
+            it "doesn't update the index for the document" do
+              painting.update_ngram_index
+              BasicArtwork.fulltext_search('painting', :index => "mongoid_fulltext.index_conditional").length.should be 0
+            end
+
+          end
+        end
+
+        context "and is a string" do
+
+          before(:all) do
+            conditional_index[:update_if] = 'false'
+          end
+
+          context "when evaluating the string within the document's instance evaluates to false" do
+
+            it "doesn't update the index for the document" do
+              painting.update_ngram_index
+              BasicArtwork.fulltext_search('painting', :index => "mongoid_fulltext.index_conditional").length.should be 0
+            end
+
+          end
+        end
+
+        context "and is a proc" do
+
+          before(:all) do
+            conditional_index[:update_if] = Proc.new { false }
+          end
+
+          context "when evaluating the string within the document's instance evaluates to false" do
+
+            it "doesn't update the index for the document" do
+              painting.update_ngram_index
+              BasicArtwork.fulltext_search('painting', :index => "mongoid_fulltext.index_conditional").length.should be 0
+            end
+
+          end
+        end
+
+        context "and is not a symbol, string, or proc" do
+
+          before(:all) do
+            conditional_index[:update_if] = %w(this isn't a symbol, string, or proc)
+          end
+
+          it "doesn't update the index for the document" do
+            painting.update_ngram_index
+            BasicArtwork.fulltext_search('painting', :index => "mongoid_fulltext.index_conditional").length.should be 0
+          end
+
+        end
+      end
+
       context "from scratch" do
 
         before(:each) do
