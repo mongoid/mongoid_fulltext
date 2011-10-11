@@ -391,7 +391,7 @@ module Mongoid
       end
 
     end
-    
+
     context "using search options" do
       let!(:patterns)    { BasicArtwork.create(:title => 'Flower Patterns') }
       let!(:flowers)     { BasicArtwork.create(:title => 'Flowers') }
@@ -408,6 +408,46 @@ module Mongoid
         first_result[0].should == flowers
         first_result[1].is_a?(Float).should be_true
       end
+    end
+
+    context "returning scores" do
+      # Since we return scores, let's make some weak guarantees about what they actually mean
+      
+      let!(:mao_yan)      { ExternalArtist.create(:full_name => "Mao Yan") }
+      let!(:mao)          { ExternalArtwork.create(:title => "Mao by Andy Warhol") }
+      let!(:maox)         { ExternalArtwork.create(:title => "Maox by Randy Morehall") }
+      let!(:somao)        { ExternalArtwork.create(:title => "Somao by Randy Morehall") }
+
+      it "returns basic matches that don't match a whole word and aren't prefixes with score < 1" do
+        ['paox', 'porehall'].each do |query|
+          results = ExternalArtist.fulltext_search(query, { :return_scores => true })
+          results.length.should > 0
+          results.map{ |result| result[-1] }.inject(true){ |accum, item| accum &= (item < 1) }.should be_true
+        end
+      end
+      
+      it "returns prefix matches with a score >= 1 but < 2" do
+        ['warho', 'rand'].each do |query|
+          results = ExternalArtist.fulltext_search(query, { :return_scores => true })
+          results.length.should > 0
+          results.map{ |result| result[-1] if result[0].to_s.starts_with?(query)}
+                 .compact
+                 .inject(true){ |accum, item| accum &= (item >= 1 and item < 2) }
+                 .should be_true
+        end
+      end
+      
+      it "returns full-word matches with a score >= 2" do
+        ['andy', 'warhol', 'mao'].each do |query|
+          results = ExternalArtist.fulltext_search(query, { :return_scores => true })
+          results.length.should > 0
+          results.map{ |result| result[-1] if result[0].to_s.split(' ').member?(query) }
+                 .compact
+                 .inject(true){ |accum, item| accum &= (item >= 2) }
+                 .should be_true
+        end
+      end
+      
     end
 
     context "remove_from_ngram_index" do

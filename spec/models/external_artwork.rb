@@ -3,4 +3,9 @@ class ExternalArtwork
   include Mongoid::FullTextSearch
   field :title
   fulltext_search_in :title, :index_name => 'mongoid_fulltext.artworks_and_artists'
+
+  def to_s
+    title
+  end
+
 end

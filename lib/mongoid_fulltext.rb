@@ -153,7 +153,6 @@ module Mongoid::FullTextSearch
         all_scores.concat(scores)
       end
       all_scores.sort!{ |document1, document2| -document1[:score] <=> -document2[:score] }
-
       instantiate_mapreduce_results(all_scores[0..max_results-1], { :return_scores => return_scores })
     end
     
@@ -189,7 +188,7 @@ module Mongoid::FullTextSearch
         step_size = 1
       end
       
-      # array of ngrams
+      # Create an array of records of the form {:ngram => x, :score => y} for all ngrams that occur in the input string
       ngram_ary = (0..filtered_str.length - config[:ngram_width]).step(step_size).map do |i|
         if i == 0 or (config[:apply_prefix_scoring_to_all_words] and \
                       config[:word_separators].has_key?(filtered_str[i-1].chr))
@@ -197,25 +196,22 @@ module Mongoid::FullTextSearch
         else
           score = Math.sqrt(2.0/filtered_str.length)
         end
-        [filtered_str[i..i+config[:ngram_width]-1], score]
+        {:ngram => filtered_str[i..i+config[:ngram_width]-1], :score => score}
       end
+
+      # If an ngram appears multiple times in the query string, keep the max score
+      ngram_ary = ngram_ary.group_by{ |h| h[:ngram] }.map{ |key, values| {:ngram => key, :score => values.map{ |v| v[:score] }.max} }
       
       if (config[:index_full_words])
         filtered_str.split(Regexp.compile(config[:word_separators].keys.join)).each do |word|
           if word.length >= config[:ngram_width]
-            ngram_ary << [ word, 1 ]
+            ngram_ary << {:ngram => word, :score => 1}
           end
         end
       end
-      
-      ngram_hash = {}
-      
-      # deduplicate, and keep the highest score
-      ngram_ary.each do |ngram, score, position|        
-        ngram_hash[ngram] = [ngram_hash[ngram] || 0, score].max
-      end
-      
-      ngram_hash
+
+      # If an ngram appears as a full word and an ngram, keep the sum of the two scores
+      Hash[ngram_ary.group_by{ |h| h[:ngram] }.map{ |key, values| [key, values.map{ |v| v[:score] }.sum] }]
     end
     
     def remove_from_ngram_index

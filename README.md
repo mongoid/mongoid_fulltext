@@ -50,6 +50,16 @@ To return a pair of `[ result, score ]` instead of an array of results, pass the
 
     Artist.fulltext_search("vince vangogh", { :return_scores => true })
 
+The larger a score is, the better mongoid_fulltext thinks the match is. The scores have the following rough 
+interpretation that you can use to make decisions about whether the match is good enough:
+
+* If a prefix of your query matches something indexed, or if your query matches a prefix of something
+  indexed (for example, searching for "foo" finds "myfoo" or searching for "myfoo" finds "foo"), you
+  can expect a score of at least 1 for the match.
+* If an entire word in your query matches an entire word that's indexed and you have the `index_full_words`
+  option turned on (it's turned on by default), you can expect a score of at least 2 for the match.
+* If neither of the above criteria are met, you can expect a score less than one.
+
 If you don't specify a field to index, the default is the result of `to_s` called on the object.
 The following definition will index the first and last name of an artist:
 
