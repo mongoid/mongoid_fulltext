@@ -180,7 +180,7 @@ module Mongoid::FullTextSearch
         filtered_str = UnicodeUtils.nfkd(filtered_str).gsub(/[^\x00-\x7F]/,'')
       end
 
-      filtered_str = filtered_str.mb_chars.downcase.split('').map{ |ch| config[:alphabet][ch] }.compact.join('')
+      filtered_str = filtered_str.mb_chars.downcase.to_s.split('').map{ |ch| config[:alphabet][ch] }.compact.join('')
       
       if bound_number_returned
         step_size = [((filtered_str.length - config[:ngram_width]).to_f / config[:max_ngrams_to_search]).ceil, 1].max
