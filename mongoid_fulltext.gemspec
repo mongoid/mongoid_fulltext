@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{mongoid_fulltext}
-  s.version = "0.5.0"
+  s.version = "0.5.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Aaron Windsor"]
-  s.date = %q{2011-10-11}
+  s.date = %q{2011-11-02}
   s.description = %q{Full-text search for the Mongoid ORM, using n-grams extracted from text}
   s.email = %q{aaron.windsor@gmail.com}
   s.extra_rdoc_files = [
@@ -42,6 +42,7 @@ Gem::Specification.new do |s|
     "spec/models/multi_field_artist.rb",
     "spec/models/multi_field_artwork.rb",
     "spec/models/partitioned_artist.rb",
+    "spec/models/stopwords_artwork.rb",
     "spec/mongoid/fulltext_spec.rb",
     "spec/spec_helper.rb"
   ]
@@ -66,6 +67,7 @@ Gem::Specification.new do |s|
     "spec/models/multi_field_artist.rb",
     "spec/models/multi_field_artwork.rb",
     "spec/models/partitioned_artist.rb",
+    "spec/models/stopwords_artwork.rb",
     "spec/mongoid/fulltext_spec.rb",
     "spec/spec_helper.rb"
   ]
