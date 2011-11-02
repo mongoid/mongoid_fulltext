@@ -29,7 +29,19 @@ module Mongoid::FullTextSearch
         :apply_prefix_scoring_to_all_words => true,
         :index_full_words => true,
         :max_candidate_set_size => 1000,
-        :remove_accents => true
+        :remove_accents => true,
+        :stop_words => Hash[['i', 'a', 's', 't', 'me', 'my', 'we', 'he', 'it', 'am', 'is', 'be', 'do', 'an', 'if', 
+                             'or', 'as', 'of', 'at', 'by', 'to', 'up', 'in', 'on', 'no', 'so', 'our', 'you', 'him', 
+                             'his', 'she', 'her', 'its', 'who', 'are', 'was', 'has', 'had', 'did', 'the', 'and', 
+                             'but', 'for', 'out', 'off', 'why', 'how', 'all', 'any', 'few', 'nor', 'not', 'own', 
+                             'too', 'can', 'don', 'now', 'ours', 'your', 'hers', 'they', 'them', 'what', 'whom', 
+                             'this', 'that', 'were', 'been', 'have', 'does', 'with', 'into', 'from', 'down', 'over', 
+                             'then', 'once', 'here', 'when', 'both', 'each', 'more', 'most', 'some', 'such', 'only', 
+                             'same', 'than', 'very', 'will', 'just', 'yours', 'their', 'which', 'these', 'those', 
+                             'being', 'doing', 'until', 'while', 'about', 'after', 'above', 'below', 'under', 
+                             'again', 'there', 'where', 'other', 'myself', 'itself', 'theirs', 'having', 'during', 
+                             'before', 'should', 'himself', 'herself', 'because', 'against', 'between', 'through', 
+                             'further', 'yourself', 'ourselves', 'yourselves', 'themselves'].map{ |x| [x,true] }]
       }
       
       config.update(options)
@@ -203,9 +215,11 @@ module Mongoid::FullTextSearch
       ngram_ary = ngram_ary.group_by{ |h| h[:ngram] }.map{ |key, values| {:ngram => key, :score => values.map{ |v| v[:score] }.max} }
       
       if (config[:index_full_words])
+        full_words_seen = {}
         filtered_str.split(Regexp.compile(config[:word_separators].keys.join)).each do |word|
-          if word.length >= config[:ngram_width]
+          if word.length >= config[:ngram_width] and full_words_seen[word].nil? and config[:stop_words][word].nil?
             ngram_ary << {:ngram => word, :score => 1}
+            full_words_seen[word] = true
           end
         end
       end

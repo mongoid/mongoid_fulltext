@@ -450,6 +450,16 @@ module Mongoid
       
     end
 
+    context "with stop words defined" do
+      let!(:flowers)      { StopwordsArtwork.create(:title => "Flowers by Andy Warhol") }
+      let!(:many_ands)    { StopwordsArtwork.create(:title => "Foo and bar and baz and foobar") }
+
+      it "doesn't give a full-word score boost to stopwords" do
+        StopwordsArtwork.fulltext_search("andy").map{ |a| a.title }.should == [flowers.title, many_ands.title]
+        StopwordsArtwork.fulltext_search("warhol and other stuff").map{ |a| a.title }.should == [flowers.title, many_ands.title]
+      end
+    end
+
     context "remove_from_ngram_index" do
       let!(:flowers1)     { BasicArtwork.create(:title => 'Flowers 1') }
       let!(:flowers2)     { BasicArtwork.create(:title => 'Flowers 1') }
