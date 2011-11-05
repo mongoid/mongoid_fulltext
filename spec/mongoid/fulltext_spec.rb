@@ -453,11 +453,18 @@ module Mongoid
     context "with stop words defined" do
       let!(:flowers)      { StopwordsArtwork.create(:title => "Flowers by Andy Warhol") }
       let!(:many_ands)    { StopwordsArtwork.create(:title => "Foo and bar and baz and foobar") }
+      let!(:harry)        { StopwordsArtwork.create(:title => "Harry in repose by JK Rowling") }
 
       it "doesn't give a full-word score boost to stopwords" do
         StopwordsArtwork.fulltext_search("andy").map{ |a| a.title }.should == [flowers.title, many_ands.title]
         StopwordsArtwork.fulltext_search("warhol and other stuff").map{ |a| a.title }.should == [flowers.title, many_ands.title]
       end
+
+      it "allows searching on words that are more than one letter, less than the ngram length and not stopwords" do
+        StopwordsArtwork.fulltext_search("jk").map{ |a| a.title }.should == [harry.title]
+        StopwordsArtwork.fulltext_search("by").map{ |a| a.title }.should == []
+      end
+
     end
 
     context "remove_from_ngram_index" do

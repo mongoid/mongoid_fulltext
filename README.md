@@ -212,9 +212,11 @@ Indexing Options
 Additional indexing/query options can be used as parameters to `fulltext_search_in`.
 
 * `alphabet`: letters to index, default is `abcdefghijklmnopqrstuvwxyz0123456789 `
-* `word_separators`: word separators, default is ` `
+* `word_separators`: word separators, default is the space character.
 * `ngram_width`: ngram width, default is `3`
 * `index_full_words`: index full words, which improves exact matches, default is `true` 
+* `stop_words`: a hash of words to avoid indexing as full words. Used only if `index_full_words`
+  is set to `true`. Defaults to a hash containing a list of common English stop words.
 * `apply_prefix_scoring_to_all_words`: score n-grams at beginning of words higher, default is `true`
 * `max_ngrams_to_search`: maximum number of ngrams to query at any given time, default is `6`
 * `max_candidate_set_size`: maximum number of candidate ngrams to examine for a given query.

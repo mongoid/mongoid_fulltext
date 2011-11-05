@@ -5,6 +5,6 @@ class StopwordsArtwork
   field :title
   fulltext_search_in :title, 
   :index_full_words => true,
-  :stop_words => { 'and' => true }
+  :stop_words => { 'and' => true, 'by' => true}
 
 end
