@@ -29,6 +29,7 @@ module Mongoid::FullTextSearch
         :max_ngrams_to_search => 6,
         :apply_prefix_scoring_to_all_words => true,
         :index_full_words => true,
+        :index_short_prefixes => false,
         :max_candidate_set_size => 1000,
         :remove_accents => true,
         :stop_words => Hash[['i', 'a', 's', 't', 'me', 'my', 'we', 'he', 'it', 'am', 'is', 'be', 'do', 'an', 'if', 
@@ -218,20 +219,35 @@ module Mongoid::FullTextSearch
 
       # If an ngram appears multiple times in the query string, keep the max score
       ngram_array = ngram_array.group_by{ |h| h[:ngram] }.map{ |key, values| {:ngram => key, :score => values.map{ |v| v[:score] }.max} }
-      
+
+      # Add 'short prefix' records to the array: prefixes of the string that are length (ngram_width - 1)
+      if config[:index_short_prefixes]
+        prefixes_seen = {}
+        filtered_str.split(Regexp.compile(config[:word_separators].keys.join)).each do |word|
+          next if word.length < config[:ngram_width]-1
+          prefix = word[0...config[:ngram_width]-1]
+          if prefixes_seen[prefix].nil? and (config[:stop_words][word].nil? or word == filtered_str)
+            ngram_array << {:ngram => prefix, :score => 1}
+            prefixes_seen[prefix] = true
+          end
+        end
+      end
+
       # Add records to the array of ngrams for each full word in the string that isn't a stop word
-      if (config[:index_full_words])
+      if config[:index_full_words]
         full_words_seen = {}
         filtered_str.split(Regexp.compile(config[:word_separators].keys.join)).each do |word|
-          if word.length > 1 and full_words_seen[word].nil? and config[:stop_words][word].nil?
+          if word.length > 1 and full_words_seen[word].nil? and (config[:stop_words][word].nil? or word == filtered_str)
             ngram_array << {:ngram => word, :score => 1}
             full_words_seen[word] = true
           end
         end
       end
 
-      # If an ngram appears as a full word and an ngram, keep the sum of the two scores
-      Hash[ngram_array.group_by{ |h| h[:ngram] }.map{ |key, values| [key, values.map{ |v| v[:score] }.sum] }]
+      # If an ngram appears as any combination of full word, short prefix, and ngram, keep the sum of the two scores
+      x = Hash[ngram_array.group_by{ |h| h[:ngram] }.map{ |key, values| [key, values.map{ |v| v[:score] }.sum] }]
+      puts "NGRAMS: #{x}"
+      x
     end
     
     def remove_from_ngram_index

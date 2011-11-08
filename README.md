@@ -214,7 +214,9 @@ Additional indexing/query options can be used as parameters to `fulltext_search_
 * `alphabet`: letters to index, default is `abcdefghijklmnopqrstuvwxyz0123456789 `
 * `word_separators`: word separators, default is the space character.
 * `ngram_width`: ngram width, default is `3`
-* `index_full_words`: index full words, which improves exact matches, default is `true` 
+* `index_full_words`: index full words, which improves exact matches, default is `true`.
+* `index_short_prefixes`: index a prefix of each full word of length `(ngram_width-1)`. Useful if
+  you use a larger ngram_width than the default of 3. Default for this option is `false`.
 * `stop_words`: a hash of words to avoid indexing as full words. Used only if `index_full_words`
   is set to `true`. Defaults to a hash containing a list of common English stop words.
 * `apply_prefix_scoring_to_all_words`: score n-grams at beginning of words higher, default is `true`

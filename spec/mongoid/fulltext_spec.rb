@@ -467,6 +467,33 @@ module Mongoid
 
     end
 
+    context "indexing short prefixes" do
+      let!(:dimethyl_mercury)   { ShortPrefixesArtwork.create(:title => "Dimethyl Mercury by Damien Hirst") }
+      let!(:volume)             { ShortPrefixesArtwork.create(:title => "Volume by Dadamaino") }
+      let!(:damaged)            { ShortPrefixesArtwork.create(:title => "Damaged: Photographs from the Chicago Daily News 1902-1933 (Governor) by Lisa Oppenheim") }
+      let!(:frozen)             { ShortPrefixesArtwork.create(:title => "Frozen Fountain XXX by Evelyn Rosenberg") }
+      let!(:skull)              { ShortPrefixesArtwork.create(:title => "Skull by Andy Warhol") }
+
+      it "finds the most relevant items with prefix indexing" do
+        ShortPrefixesArtwork.fulltext_search("damien").first.should == dimethyl_mercury
+        ShortPrefixesArtwork.fulltext_search("dami").first.should == dimethyl_mercury
+        ShortPrefixesArtwork.fulltext_search("dama").first.should == damaged
+        ShortPrefixesArtwork.fulltext_search("dam").first.should_not == volume
+        ShortPrefixesArtwork.fulltext_search("dadamaino").first.should == volume
+        ShortPrefixesArtwork.fulltext_search("kull").first.should == skull
+      end
+
+      it "doesn't index prefixes of stopwords" do
+        # damaged has the word "from" in it, which shouldn't get indexed.
+        ShortPrefixesArtwork.fulltext_search("fro").should == [frozen]
+      end
+
+      it "does index prefixes that would be stopwords taken alone" do
+        # skull has the word "andy" in it, which should get indexed as "and" even though "and" is a stopword
+        ShortPrefixesArtwork.fulltext_search("and").should == [skull]
+      end
+    end
+
     context "remove_from_ngram_index" do
       let!(:flowers1)     { BasicArtwork.create(:title => 'Flowers 1') }
       let!(:flowers2)     { BasicArtwork.create(:title => 'Flowers 1') }
