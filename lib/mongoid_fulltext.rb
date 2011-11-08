@@ -245,9 +245,7 @@ module Mongoid::FullTextSearch
       end
 
       # If an ngram appears as any combination of full word, short prefix, and ngram, keep the sum of the two scores
-      x = Hash[ngram_array.group_by{ |h| h[:ngram] }.map{ |key, values| [key, values.map{ |v| v[:score] }.sum] }]
-      puts "NGRAMS: #{x}"
-      x
+      Hash[ngram_array.group_by{ |h| h[:ngram] }.map{ |key, values| [key, values.map{ |v| v[:score] }.sum] }]
     end
     
     def remove_from_ngram_index
