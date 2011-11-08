@@ -227,7 +227,7 @@ module Mongoid::FullTextSearch
           next if word.length < config[:ngram_width]-1
           prefix = word[0...config[:ngram_width]-1]
           if prefixes_seen[prefix].nil? and (config[:stop_words][word].nil? or word == filtered_str)
-            ngram_array << {:ngram => prefix, :score => 1}
+            ngram_array << {:ngram => prefix, :score => 1 + 1.0/filtered_str.length}
             prefixes_seen[prefix] = true
           end
         end
@@ -238,7 +238,7 @@ module Mongoid::FullTextSearch
         full_words_seen = {}
         filtered_str.split(Regexp.compile(config[:word_separators].keys.join)).each do |word|
           if word.length > 1 and full_words_seen[word].nil? and (config[:stop_words][word].nil? or word == filtered_str)
-            ngram_array << {:ngram => word, :score => 1}
+            ngram_array << {:ngram => word, :score => 1 + 1.0/filtered_str.length}
             full_words_seen[word] = true
           end
         end
