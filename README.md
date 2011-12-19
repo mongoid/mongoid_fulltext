@@ -4,6 +4,12 @@ Mongoid Fulltext Search
 Full-text search using n-gram matching for the Mongoid ODM. Tested on MongoDB 1.6 and above, but
 probably works on earlier versions as well.
 
+MongoDB currently has no native full-text search capabilities, so this gem is a good fit for cases
+where you want something a little less than a full-blown indexing service like Solr. mongoid_fulltext
+lets you do a fuzzy string search across relatively short strings, which makes it good for populating
+autocomplete boxes based on the display names of your Rails models but not appropriate for, say, 
+indexing hundreds of thousands of HTML documents.
+
 Some examples:
 --------------
     

@@ -24,7 +24,7 @@ module Mongoid::FullTextSearch
 
       config = { 
         :alphabet => 'abcdefghijklmnopqrstuvwxyz0123456789 ',
-        :word_separators => ' ',
+        :word_separators => "- \n\t",
         :ngram_width => 3,
         :max_ngrams_to_search => 6,
         :apply_prefix_scoring_to_all_words => true,
@@ -219,11 +219,17 @@ module Mongoid::FullTextSearch
 
       # If an ngram appears multiple times in the query string, keep the max score
       ngram_array = ngram_array.group_by{ |h| h[:ngram] }.map{ |key, values| {:ngram => key, :score => values.map{ |v| v[:score] }.max} }
+      
+      if config[:index_short_prefixes] or config[:index_full_words]
+        split_regex_def = config[:word_separators].keys.map{ |k| Regexp.escape(k) }.join
+        split_regex = Regexp.compile("[#{split_regex_def}]")
+        all_words = filtered_str.split(split_regex)
+      end
 
       # Add 'short prefix' records to the array: prefixes of the string that are length (ngram_width - 1)
       if config[:index_short_prefixes]
         prefixes_seen = {}
-        filtered_str.split(Regexp.compile(config[:word_separators].keys.join)).each do |word|
+        all_words.each do |word|
           next if word.length < config[:ngram_width]-1
           prefix = word[0...config[:ngram_width]-1]
           if prefixes_seen[prefix].nil? and (config[:stop_words][word].nil? or word == filtered_str)
@@ -236,7 +242,7 @@ module Mongoid::FullTextSearch
       # Add records to the array of ngrams for each full word in the string that isn't a stop word
       if config[:index_full_words]
         full_words_seen = {}
-        filtered_str.split(Regexp.compile(config[:word_separators].keys.join)).each do |word|
+        all_words.each do |word|
           if word.length > 1 and full_words_seen[word].nil? and (config[:stop_words][word].nil? or word == filtered_str)
             ngram_array << {:ngram => word, :score => 1 + 1.0/filtered_str.length}
             full_words_seen[word] = true
