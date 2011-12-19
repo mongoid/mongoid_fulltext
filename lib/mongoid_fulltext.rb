@@ -24,7 +24,7 @@ module Mongoid::FullTextSearch
 
       config = { 
         :alphabet => 'abcdefghijklmnopqrstuvwxyz0123456789 ',
-        :word_separators => "- \n\t",
+        :word_separators => "-_ \n\t",
         :ngram_width => 3,
         :max_ngrams_to_search => 6,
         :apply_prefix_scoring_to_all_words => true,
@@ -189,8 +189,8 @@ module Mongoid::FullTextSearch
         str = UnicodeUtils.nfkd(CGI.unescape(str)).gsub(/[^\x00-\x7F]/,'')
       end
 
-      # Remove any characters that aren't in the alphabet
-      filtered_str = str.mb_chars.to_s.downcase.split('').find_all{ |ch| config[:alphabet][ch] }.join('')
+      # Remove any characters that aren't in the alphabet and aren't word separators
+      filtered_str = str.mb_chars.to_s.downcase.split('').find_all{ |ch| config[:alphabet][ch] or config[:word_separators][ch] }.join('')
       
       # Figure out how many ngrams to extract from the string. If we can't afford to extract all ngrams,
       # step over the string in evenly spaced strides to extract ngrams. For example, to extract 3 3-letter

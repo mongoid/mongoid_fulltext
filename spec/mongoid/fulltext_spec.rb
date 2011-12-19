@@ -410,6 +410,18 @@ module Mongoid
       end
     end
 
+    context "with various word separators" do
+      let!(:hard_edged_painting)   { BasicArtwork.create(:title => "Hard-edged painting") }
+      let!(:edgy_painting)         { BasicArtwork.create(:title => "Edgy painting") }
+      let!(:hard_to_find_ledge)    { BasicArtwork.create(:title => "Hard to find ledge") }
+
+      it "should treat dashes as word separators, giving a score boost to each dash-separated word" do
+        BasicArtwork.fulltext_search('hard-edged').first.should == hard_edged_painting
+        BasicArtwork.fulltext_search('hard edge').first.should == hard_edged_painting
+        BasicArtwork.fulltext_search('hard edged').first.should == hard_edged_painting
+      end
+    end
+
     context "returning scores" do
       # Since we return scores, let's make some weak guarantees about what they actually mean
       
