@@ -669,5 +669,16 @@ module Mongoid
       end
 
     end
+
+    context "batched reindexing" do
+      let!(:flowers1) { DelayedArtwork.create(:title => 'Flowers 1') }
+
+      it "should not rebuild index until explicitly invoked" do
+        DelayedArtwork.fulltext_search("flowers").length.should == 0
+        DelayedArtwork.update_ngram_index
+        DelayedArtwork.fulltext_search("flowers").length.should == 1
+      end
+    end
+
   end
 end

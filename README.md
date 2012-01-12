@@ -243,6 +243,7 @@ Additional indexing/query options can be used as parameters to `fulltext_search_
     * When set to a string, the string is evaluated within the document's instance.
     * When set to a proc, the proc is called, and the document is given to the proc as the first arg.
     * When set to any other type of object, the document's index will not be updated.
+* `reindex_immediately`: whether models will be reindexed automatically upon saves or updates. Defaults to true. When set to false, the class-level `update_ngram_index` method can be called to perform reindexing.
 
 Array filters
 -------------

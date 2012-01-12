@@ -32,6 +32,7 @@ module Mongoid::FullTextSearch
         :index_short_prefixes => false,
         :max_candidate_set_size => 1000,
         :remove_accents => true,
+        :reindex_immediately => true,
         :stop_words => Hash[['i', 'a', 's', 't', 'me', 'my', 'we', 'he', 'it', 'am', 'is', 'be', 'do', 'an', 'if', 
                              'or', 'as', 'of', 'at', 'by', 'to', 'up', 'in', 'on', 'no', 'so', 'our', 'you', 'him', 
                              'his', 'she', 'her', 'its', 'who', 'are', 'was', 'has', 'had', 'did', 'the', 'and', 
@@ -54,7 +55,7 @@ module Mongoid::FullTextSearch
       config[:word_separators] = Hash[config[:word_separators].split('').map{ |ch| [ch,ch] }]
       self.mongoid_fulltext_config[index_name] = config
       
-      before_save :update_ngram_index
+      before_save(:update_ngram_index) if config[:reindex_immediately]
       before_destroy :remove_from_ngram_index
     end
     
