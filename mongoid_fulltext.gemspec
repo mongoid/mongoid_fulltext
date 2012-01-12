@@ -4,14 +4,14 @@
 # -*- encoding: utf-8 -*-
 
 Gem::Specification.new do |s|
-  s.name = %q{mongoid_fulltext}
-  s.version = "0.5.6"
+  s.name = "mongoid_fulltext"
+  s.version = "0.5.7"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Aaron Windsor"]
-  s.date = %q{2011-12-19}
-  s.description = %q{Full-text search for the Mongoid ORM, using n-grams extracted from text}
-  s.email = %q{aaron.windsor@gmail.com}
+  s.date = "2012-01-12"
+  s.description = "Full-text search for the Mongoid ORM, using n-grams extracted from text"
+  s.email = "aaron.windsor@gmail.com"
   s.extra_rdoc_files = [
     "LICENSE",
     "README.md"
@@ -30,6 +30,7 @@ Gem::Specification.new do |s|
     "spec/models/accentless_artwork.rb",
     "spec/models/advanced_artwork.rb",
     "spec/models/basic_artwork.rb",
+    "spec/models/delayed_artwork.rb",
     "spec/models/external_artist.rb",
     "spec/models/external_artwork.rb",
     "spec/models/external_artwork_no_fields_supplied.rb",
@@ -47,15 +48,16 @@ Gem::Specification.new do |s|
     "spec/mongoid/fulltext_spec.rb",
     "spec/spec_helper.rb"
   ]
-  s.homepage = %q{http://github.com/aaw/mongoid_fulltext}
+  s.homepage = "http://github.com/aaw/mongoid_fulltext"
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.6.2}
-  s.summary = %q{Full-text search for the Mongoid ORM}
+  s.rubygems_version = "1.8.10"
+  s.summary = "Full-text search for the Mongoid ORM"
   s.test_files = [
     "spec/models/accentless_artwork.rb",
     "spec/models/advanced_artwork.rb",
     "spec/models/basic_artwork.rb",
+    "spec/models/delayed_artwork.rb",
     "spec/models/external_artist.rb",
     "spec/models/external_artwork.rb",
     "spec/models/external_artwork_no_fields_supplied.rb",
