@@ -10,6 +10,11 @@ lets you do a fuzzy string search across relatively short strings, which makes i
 autocomplete boxes based on the display names of your Rails models but not appropriate for, say, 
 indexing hundreds of thousands of HTML documents.
 
+Install
+--------------
+
+    gem 'mongoid_fulltext'
+
 Some examples:
 --------------
     
