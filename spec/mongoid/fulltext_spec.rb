@@ -373,6 +373,7 @@ module Mongoid
                          'filter_values.is_foobar', 'filter_values.is_artwork', 'filter_values.is_artist'].sort
         keys.sort.should == expected_keys
       end
+
     end
     
     context "with partitions applied to a model" do
@@ -645,25 +646,30 @@ module Mongoid
               "name" => "_id_", 
               "ns" => "mongoid_fulltext_test.mongoid_fulltext.index_basicartwork_0", 
               "key" => { "_id" => 1 }, 
-              "v" => 0
+              "v" => 1
             }, 
             "fts_index" => { 
               "name" => "fts_index", 
               "ns" => "mongoid_fulltext_test.mongoid_fulltext.index_basicartwork_0", 
               "key" => { "ngram" => 1, "score" => -1 }, 
-              "v" => 0
+              "v" => 1
             }, 
             "document_id_1" => {
               "name" => "document_id_1", 
               "ns" => "mongoid_fulltext_test.mongoid_fulltext.index_basicartwork_0", 
               "key" => { "document_id" => 1 }, 
-              "v"=>0 
+              "v"=> 1 
             }
           }
         end
         
         it "doesn't fail on models that don't have a fulltext index" do
           lambda { HiddenDragon.create_indexes }.should_not raise_error
+        end
+
+        it "doesn't blow up when the Mongoid.logger is set to false" do
+          Mongoid.logger = false
+          BasicArtwork.create_indexes
         end
         
       end
