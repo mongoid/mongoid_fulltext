@@ -86,7 +86,7 @@ module Mongoid::FullTextSearch
         next if !keys.member?('ngram')
         all_filter_keys |= keys.find_all{ |key| key.starts_with?('filter_values.') }
         if keys & correct_keys != correct_keys
-          Mongoid.logger.info "Droping #{name} [#{keys & correct_keys} <=> #{correct_keys}]" if Mongoid.logger
+          Mongoid.logger.info "Dropping #{name} [#{keys & correct_keys} <=> #{correct_keys}]" if Mongoid.logger
           coll.drop_index(name)
         end
       end

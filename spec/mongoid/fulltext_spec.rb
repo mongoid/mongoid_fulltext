@@ -640,27 +640,8 @@ module Mongoid
           # but mongo will automatically attempt to index _id in the background
           Mongoid.master["mongoid_fulltext.index_basicartwork_0"].index_information.size.should <= 1
           BasicArtwork.create_indexes
-          Mongoid.master["mongoid_fulltext.index_basicartwork_0"].index_information.should == 
-          { 
-            "_id_" => { 
-              "name" => "_id_", 
-              "ns" => "mongoid_fulltext_test.mongoid_fulltext.index_basicartwork_0", 
-              "key" => { "_id" => 1 }, 
-              "v" => 1
-            }, 
-            "fts_index" => { 
-              "name" => "fts_index", 
-              "ns" => "mongoid_fulltext_test.mongoid_fulltext.index_basicartwork_0", 
-              "key" => { "ngram" => 1, "score" => -1 }, 
-              "v" => 1
-            }, 
-            "document_id_1" => {
-              "name" => "document_id_1", 
-              "ns" => "mongoid_fulltext_test.mongoid_fulltext.index_basicartwork_0", 
-              "key" => { "document_id" => 1 }, 
-              "v"=> 1 
-            }
-          }
+          expected_indexes = ['_id_', 'fts_index', 'document_id_1'].sort
+          Mongoid.master["mongoid_fulltext.index_basicartwork_0"].index_information.keys.sort.should == expected_indexes
         end
         
         it "doesn't fail on models that don't have a fulltext index" do
