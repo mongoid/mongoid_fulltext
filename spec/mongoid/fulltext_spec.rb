@@ -370,7 +370,7 @@ module Mongoid
         ngram_indexes.length.should == 1
         keys = ngram_indexes.first[1]['key'].keys
         expected_keys = ['ngram','score', 'filter_values.is_fuzzy', 'filter_values.is_awesome', 
-                         'filter_values.is_foobar', 'filter_values.is_artwork', 'filter_values.is_artist'].sort
+                         'filter_values.is_foobar', 'filter_values.is_artwork', 'filter_values.is_artist', 'filter_values.is_rgb'].sort
         keys.sort.should == expected_keys
       end
 
@@ -665,6 +665,26 @@ module Mongoid
         DelayedArtwork.update_ngram_index
         DelayedArtwork.fulltext_search("flowers").length.should == 1
       end
+    end
+
+    context "with a filter returning an array of values" do
+      
+      let!(:foobar_artwork)    { FilteredArtwork.create(:title => 'foobar') }
+      let!(:barfoo_artwork)    { FilteredArtwork.create(:title => 'barfoo') }
+
+      it "allows filtered searches given an array matching all values" do
+        FilteredArtwork.fulltext_search('foobar', :is_rgb => ["red","green","blue"]).should == [foobar_artwork, barfoo_artwork]
+        FilteredArtwork.fulltext_search('foobar', :is_rgb => ["red"]).should == [foobar_artwork, barfoo_artwork]
+        FilteredArtwork.fulltext_search('foobar', :is_rgb => ["green"]).should == [foobar_artwork, barfoo_artwork]
+        FilteredArtwork.fulltext_search('foobar', :is_rgb => ["blue"]).should == [foobar_artwork, barfoo_artwork]
+      end
+
+      it "allows overriding filtered searches given an array to match $in the values instead of $all" do
+        FilteredArtwork.fulltext_search('foobar', :is_rgb => {"$in" => ["red","yellow"]}).should == [foobar_artwork, barfoo_artwork]
+        FilteredArtwork.fulltext_search('foobar', :is_rgb => {"$in" => ["brown","purple","green"]}).should == [foobar_artwork, barfoo_artwork]
+        FilteredArtwork.fulltext_search('foobar', :is_rgb => {"$in" => ["red","blue","violet"]}).should == [foobar_artwork, barfoo_artwork]
+      end
+
     end
 
   end

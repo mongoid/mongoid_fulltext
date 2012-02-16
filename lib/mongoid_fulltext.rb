@@ -123,7 +123,12 @@ module Mongoid::FullTextSearch
       coll = collection.db.collection(index_name)
       cursors = ngrams.map do |ngram| 
         query = {'ngram' => ngram[0]}
-        query.update(Hash[options.map { |key,value| [ 'filter_values.%s' % key, { '$all' => [ value ].flatten } ] }])
+        query.update(Hash[options.map { |key,value|
+          case value
+            when Hash then ['filter_values.%s' % key, value]
+            else ['filter_values.%s' % key, { '$all' => [ value ].flatten }]
+          end
+        }])
         count = coll.find(query).count
         {:ngram => ngram, :count => count, :query => query}
       end.sort!{ |record1, record2| record1[:count] <=> record2[:count] }
