@@ -370,7 +370,7 @@ module Mongoid
         ngram_indexes.length.should == 1
         keys = ngram_indexes.first[1]['key'].keys
         expected_keys = ['ngram','score', 'filter_values.is_fuzzy', 'filter_values.is_awesome', 
-                         'filter_values.is_foobar', 'filter_values.is_artwork', 'filter_values.is_artist'].sort
+                         'filter_values.is_foobar', 'filter_values.is_artwork', 'filter_values.is_artist', 'filter_values.colors?'].sort
         keys.sort.should == expected_keys
       end
 
@@ -664,6 +664,101 @@ module Mongoid
         DelayedArtwork.fulltext_search("flowers").length.should == 0
         DelayedArtwork.update_ngram_index
         DelayedArtwork.fulltext_search("flowers").length.should == 1
+      end
+    end
+
+    # For =~ operator documentation
+    # https://github.com/dchelimsky/rspec/blob/master/lib/spec/matchers/match_array.rb#L53
+    
+    context "with artwork that returns an array of colors as a filter" do
+      let!(:title) {"title"}
+      let!(:nomatch) {"nomatch"}
+      let!(:red) {"red"}
+      let!(:green) {"green"}
+      let!(:blue) {"blue"}
+      let!(:yellow) {"yellow"}
+      let!(:brown) {"brown"}
+
+      let!(:rgb_artwork) {FilteredArtwork.create(:title => "#{title} rgb", :colors => [red,green,blue])}
+      let!(:holiday_artwork) {FilteredArtwork.create(:title => "#{title} holiday", :colors => [red,green])}
+      let!(:aqua_artwork) {FilteredArtwork.create(:title => "#{title} aqua", :colors => [green,blue])}
+
+      context "with a fulltext search passing red, green, and blue to the colors filter" do
+        it "should return the rgb artwork" do
+          FilteredArtwork.fulltext_search(title, :colors? => [red,green,blue]).should == [rgb_artwork]
+        end
+      end
+
+      context "with a fulltext search passing blue and red to the colors filter" do
+        it "should return the rgb artwork" do
+          FilteredArtwork.fulltext_search(title, :colors? => [blue,red]).should == [rgb_artwork]
+        end
+      end
+
+      context "with a fulltext search passing green to the colors filter" do
+        it "should return all artwork" do
+          FilteredArtwork.fulltext_search(title, :colors? => [green]).should =~ [rgb_artwork,holiday_artwork,aqua_artwork]
+        end
+      end
+
+      context "with a fulltext search passing no colors to the filter" do
+        it "should return all artwork" do
+          FilteredArtwork.fulltext_search(title).should =~ [rgb_artwork,holiday_artwork,aqua_artwork]
+        end
+      end
+
+      context "with a fulltext search passing green and yellow to the colors filter" do
+        it "should return no artwork" do
+          FilteredArtwork.fulltext_search(title, :colors? => [green,yellow]).should == []
+        end
+      end
+
+      context "with the query operator overridden to use $in instead of the default $all" do
+        context "with a fulltext search passing green and yellow to the colors filter" do
+          it "should return all of the artwork" do
+            FilteredArtwork.fulltext_search(title, :colors? => {:any => [green,yellow]}).should =~ [rgb_artwork,holiday_artwork,aqua_artwork]
+          end
+        end
+
+        context "with a fulltext search passing brown and yellow to the colors filter" do
+          it "should return none of the artwork" do
+            FilteredArtwork.fulltext_search(title, :colors? => {:any => [brown,yellow]}).should == []
+          end
+        end
+
+        context "with a fulltext search passing blue to the colors filter" do
+          it "should return the rgb and aqua artwork" do
+            FilteredArtwork.fulltext_search(title, :colors? => {:any => [blue]}).should == [rgb_artwork,aqua_artwork]
+          end
+        end
+
+        context "with a fulltext search term that won't match" do
+          it "should return none of the artwork" do
+            FilteredArtwork.fulltext_search(nomatch, :colors? => {:any => [green,yellow]}).should == []
+          end
+        end
+      end
+
+      context "with the query operator overridden to use $all" do
+        context "with a fulltext search passing red, green, and blue to the colors filter" do
+          it "should return the rgb artwork" do
+            FilteredArtwork.fulltext_search(title, :colors? => {:all => [red,green,blue]}).should == [rgb_artwork]
+          end
+        end
+
+        context "with a fulltext search passing green to the colors filter" do
+          it "should return all artwork" do
+            FilteredArtwork.fulltext_search(title, :colors? => {:all => [green]}).should =~ [rgb_artwork,holiday_artwork,aqua_artwork]
+          end
+        end
+      end
+
+      context "with an unknown query operator used to override the default $all" do
+        context "with a fulltext search passing red, green, and blue to the colors filter" do
+          it "should raise an error" do
+            -> {FilteredArtwork.fulltext_search(title, :colors? => {:unknown => [red,green,blue]})}.should raise_error(Mongoid::FullTextSearch::UnknownFilterQueryOperator)
+          end
+        end
       end
     end
 

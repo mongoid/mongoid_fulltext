@@ -10,6 +10,7 @@ module Mongoid::FullTextSearch
   end
 
   class UnspecifiedIndexError < StandardError; end
+  class UnknownFilterQueryOperator < StandardError; end
 
   module ClassMethods
   
@@ -123,7 +124,7 @@ module Mongoid::FullTextSearch
       coll = collection.db.collection(index_name)
       cursors = ngrams.map do |ngram| 
         query = {'ngram' => ngram[0]}
-        query.update(Hash[options.map { |key,value| [ 'filter_values.%s' % key, { '$all' => [ value ].flatten } ] }])
+        query.update(map_query_filters options)
         count = coll.find(query).count
         {:ngram => ngram, :count => count, :query => query}
       end.sort!{ |record1, record2| record1[:count] <=> record2[:count] }
@@ -268,6 +269,23 @@ module Mongoid::FullTextSearch
       end
     end
     
+    private
+    # Take a list of filters to be mapped so they can update the query
+    # used upon the fulltext search of the ngrams
+    def map_query_filters filters
+      Hash[filters.map {|key,value|
+        case value
+          when Hash then
+            if value.has_key? :any then format_query_filter('$in',key,value[:any])
+            elsif value.has_key? :all then format_query_filter('$all',key,value[:all])
+            else raise UnknownFilterQueryOperator, value.keys.join(","), caller end
+          else format_query_filter('$all',key,value)
+        end
+      }]
+    end
+    def format_query_filter operator, key, value
+      ['filter_values.%s' % key, {operator => [value].flatten}]
+    end
   end
 
   def update_ngram_index
