@@ -280,6 +280,20 @@ at both the Art Basel and the New York Armory exhibition.
     # Artists at both the Art Basel and the New York Armory exhibition
     Artist.fulltext_search('foobar', :exhibitions => [ "Art Basel", "New York Armory" ])
 
+    # Note that the following explicit syntax may be used to achieve the
+    # same result as above
+    Artist.fulltext_search('foobar', :exhibitions => {:all => [ "Art Basel", "New York Armory" ]})
+
+If you want to find all artists that are at either the Art Basel or the
+New York Armory exhibition, then you may specify the `:any` operator in
+the filter.
+
+    # Artists at either the Art Basel or the New York Armory exhibition
+    Artist.fulltext_search('foobar', :exhibitions => {:any => [ "Art Basel", "New York Armory" ]})
+
+Note that `:all` and `:any` are currently the only supported operators
+for the array filters.
+
 Building the index
 ------------------
 
