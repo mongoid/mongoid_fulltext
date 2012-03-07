@@ -222,26 +222,23 @@ Indexing Options
 
 Additional indexing/query options can be used as parameters to `fulltext_search_in`.
 
-* `alphabet`: letters to index, default is `abcdefghijklmnopqrstuvwxyz0123456789 `
+* `alphabet`: letters to index, default is `abcdefghijklmnopqrstuvwxyz0123456789 `.
 * `word_separators`: word separators, default is the space character.
-* `ngram_width`: ngram width, default is `3`
+* `ngram_width`: ngram width, default is `3`.
 * `index_full_words`: index full words, which improves exact matches, default is `true`.
 * `index_short_prefixes`: index a prefix of each full word of length `(ngram_width-1)`. Useful if
   you use a larger ngram_width than the default of 3. Default for this option is `false`.
 * `stop_words`: a hash of words to avoid indexing as full words. Used only if `index_full_words`
   is set to `true`. Defaults to a hash containing a list of common English stop words.
-* `apply_prefix_scoring_to_all_words`: score n-grams at beginning of words higher, default is `true`
-* `max_ngrams_to_search`: maximum number of ngrams to query at any given time, default is `6`
+* `apply_prefix_scoring_to_all_words`: score n-grams at beginning of words higher, default is `true`.
+* `max_ngrams_to_search`: maximum number of ngrams to query at any given time, default is `6`.
 * `max_candidate_set_size`: maximum number of candidate ngrams to examine for a given query.
   Defaults to 1000. If you're seeing poor results, you can try increasing this value to consider
   more ngrams per query (changing this parameter does not require a re-index.) The amount of time
   a search takes is directly proportional to this parameter's value.
-* `remove_accents`: remove accents on accented characters or not. Defaults to true.  If a string 
-  is encoded in UTF-8, we strip the accents using NFKD normalization (via an external library, 
-  `unicode_utils`. If a string is encoded in ASCII-8BIT, we assume it has been passed via a
-  URL, for instance we might have "%C3%A9" which is how an "e-accute" ("é") gets passed
-  through a web-browser. These are then changed to their UTF-8 equivalents (via the `CGI` gem) 
-  and then finally stripped, as before.
+* `remove_accents`: remove accents on accented characters, default is `true`. 
+  We strip the accents using [NFKD normalization](http://unicode-utils.rubyforge.org/UnicodeUtils.html#method-c-compatibility_decomposition)
+  using an external library, `unicode_utils`.
 * `update_if`: controls whether or not the index will be updated. This can be set to a symbol,
   string, or proc. If the result of evaluating the value is true, the index will be updated.
     * When set to a symbol, the symbol is sent to the document.
