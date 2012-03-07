@@ -29,16 +29,28 @@ module Mongoid
       let!(:lowered)     { BasicArtwork.create(:title => 'Lowered') }
       let!(:cookies)     { BasicArtwork.create(:title => 'Cookies') }
       let!(:empty)       { BasicArtwork.create(:title => '') }
-      let!(:cesar) { BasicArtwork.create(:title => "C\u00e9sar Galicia") }
-      let!(:julio) { BasicArtwork.create(:title => "Julio Cesar Morales") }
-      let!(:csar) { BasicArtwork.create(:title => "Csar") }
-
+      let!(:cesar)       { BasicArtwork.create(:title => "C\u00e9sar Galicia") }
+      let!(:julio)       { BasicArtwork.create(:title => "Julio Cesar Morales") }
+      let!(:csar)        { BasicArtwork.create(:title => "Csar") }
+      let!(:percent)     { BasicArtwork.create(:title => "Untitled (cal%desert)") }
+      
+      it "returns empty for empties" do
+        BasicArtwork.fulltext_search(nil, :max_results => 1).should == []
+        BasicArtwork.fulltext_search("", :max_results => 1).should == []
+      end
+      
+      it "finds percents" do
+        BasicArtwork.fulltext_search("cal%desert".force_encoding("ASCII-8BIT"), :max_results => 1).first.should == percent
+        BasicArtwork.fulltext_search("cal%desert".force_encoding("UTF-8"), :max_results => 1).first.should == percent
+      end
+      
       it "forgets accents" do
         BasicArtwork.fulltext_search('cesar', :max_results => 1).first.should == cesar
         BasicArtwork.fulltext_search('cesar g', :max_results => 1).first.should == cesar
         BasicArtwork.fulltext_search("C\u00e9sar", :max_results => 1).first.should == cesar
-        BasicArtwork.fulltext_search("C\303\251sar", :max_results => 1).first.should == cesar
-        BasicArtwork.fulltext_search("c%C3%A9sar".encode("ASCII-8BIT"), :max_results => 1).first.should == cesar
+        BasicArtwork.fulltext_search("C\303\251sar".force_encoding("UTF-8"), :max_results => 1).first.should == cesar
+        BasicArtwork.fulltext_search(CGI.unescape("c%C3%A9sar"), :max_results => 1).first.should == cesar
+        BasicArtwork.fulltext_search(CGI.unescape("c%C3%A9sar".encode("ASCII-8BIT")), :max_results => 1).first.should == cesar
       end
 
       it "returns exact matches" do
