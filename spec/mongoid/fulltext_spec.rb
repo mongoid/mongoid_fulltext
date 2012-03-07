@@ -40,7 +40,8 @@ module Mongoid
       end
       
       it "finds percents" do
-        BasicArtwork.fulltext_search('cal%desert', :max_results => 1).first.should == percent
+        BasicArtwork.fulltext_search("cal%desert".force_encoding("ASCII-8BIT"), :max_results => 1).first.should == percent
+        BasicArtwork.fulltext_search("cal%desert".force_encoding("UTF-8"), :max_results => 1).first.should == percent
       end
       
       it "forgets accents" do
