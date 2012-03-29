@@ -17,7 +17,7 @@ Install
 
 Some examples:
 --------------
-    
+
 Suppose you have an `Artist` model and want to index each artist's name:
 
     class Artist
@@ -337,4 +337,16 @@ Running the specs
 -----------------
 
 To run the specs, execute `rake spec`. You need a local MongoDB instance to run the specs.
+
+Contributing
+------------
+
+Fork the project. Make your feature addition or bug fix with tests. Send a pull request. Bonus points for topic branches.
+
+Copyright and License
+---------------------
+
+MIT License, see [LICENSE](https://github.com/aaw/mongoid_fulltext/blob/master/LICENSE) for details.
+
+(c) 2011-2012 [Art.sy Inc.](http://artsy.github.com)
 
