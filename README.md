@@ -1,4 +1,4 @@
-Mongoid Fulltext Search
+Mongoid Fulltext Search [![Build Status](https://secure.travis-ci.org/artsy/mongoid_fulltext_.png)](http://travis-ci.org/artsy/mongoid_fulltext)
 =======================
 
 Full-text search using n-gram matching for the Mongoid ODM. Tested on MongoDB 1.6 and above, but
