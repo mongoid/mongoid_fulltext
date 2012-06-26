@@ -13,6 +13,9 @@ indexing hundreds of thousands of HTML documents.
 Install
 --------------
 
+Version 0.6.0 or newer of this gem requires Mongoid 3.0.
+For Ruby 1.8.7 or Mongoid 2.x use [mongoid_fulltext 0.5.x](https://github.com/artsy/mongoid_fulltext/tree/0.5-stable).
+
 ``` ruby
 gem 'mongoid_fulltext'
 ```

@@ -1,5 +1,5 @@
-0.6.0 (TBD)
------------
+0.6.0 (Next Release)
+--------------------
 
 * [#2](https://github.com/artsy/mongoid_fulltext/pull/2): Upgrade to Mongoid 3.0 - [@volmer](https://github.com/volmer).
 
