@@ -1,6 +1,10 @@
 source "http://rubygems.org"
 
-gem "unicode_utils", "~> 1.0.0"
+if RUBY_VERSION >= "1.9.0"
+  gem "unicode_utils", "~> 1.0.0"
+else
+  gem "diacritics_fu", "~> 1.0.3"
+end
 
 group :development, :test do
   gem "bundler"

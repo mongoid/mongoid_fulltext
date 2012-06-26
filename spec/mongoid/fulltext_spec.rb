@@ -7,7 +7,7 @@ module Mongoid
 
       let!(:abcdef) { AdvancedArtwork.create(:title => 'abcdefg hijklmn') }
       let!(:cesar) { AccentlessArtwork.create(:title => "C\u00e9sar Galicia") }
-      let!(:julio) { AccentlessArtwork.create(:title => "Julio Cesar Morales") } 
+      let!(:julio) { AccentlessArtwork.create(:title => "Julio Cesar Morales") }
 
       it "should recognize all options" do
         # AdvancedArtwork is defined with an ngram_width of 4 and a different alphabet (abcdefg)
@@ -40,17 +40,21 @@ module Mongoid
       end
       
       it "finds percents" do
-        BasicArtwork.fulltext_search("cal%desert".force_encoding("ASCII-8BIT"), :max_results => 1).first.should == percent
-        BasicArtwork.fulltext_search("cal%desert".force_encoding("UTF-8"), :max_results => 1).first.should == percent
+        if RUBY_VERSION >= "1.9.0"
+          BasicArtwork.fulltext_search("cal%desert".force_encoding("ASCII-8BIT"), :max_results => 1).first.should == percent
+          BasicArtwork.fulltext_search("cal%desert".force_encoding("UTF-8"), :max_results => 1).first.should == percent
+        end
       end
       
       it "forgets accents" do
-        BasicArtwork.fulltext_search('cesar', :max_results => 1).first.should == cesar
-        BasicArtwork.fulltext_search('cesar g', :max_results => 1).first.should == cesar
-        BasicArtwork.fulltext_search("C\u00e9sar", :max_results => 1).first.should == cesar
-        BasicArtwork.fulltext_search("C\303\251sar".force_encoding("UTF-8"), :max_results => 1).first.should == cesar
-        BasicArtwork.fulltext_search(CGI.unescape("c%C3%A9sar"), :max_results => 1).first.should == cesar
-        BasicArtwork.fulltext_search(CGI.unescape("c%C3%A9sar".encode("ASCII-8BIT")), :max_results => 1).first.should == cesar
+        if RUBY_VERSION >= "1.9.0"
+          BasicArtwork.fulltext_search('cesar', :max_results => 1).first.should == cesar
+          BasicArtwork.fulltext_search('cesar g', :max_results => 1).first.should == cesar
+          BasicArtwork.fulltext_search("C\u00e9sar", :max_results => 1).first.should == cesar
+          BasicArtwork.fulltext_search("C\303\251sar".force_encoding("UTF-8"), :max_results => 1).first.should == cesar
+          BasicArtwork.fulltext_search(CGI.unescape("c%C3%A9sar"), :max_results => 1).first.should == cesar
+          BasicArtwork.fulltext_search(CGI.unescape("c%C3%A9sar".encode("ASCII-8BIT")), :max_results => 1).first.should == cesar
+        end
       end
 
       it "returns exact matches" do
@@ -374,14 +378,14 @@ module Mongoid
       # fields as well as the union of all the filter fields to allow for efficient lookups.
 
       it "creates a proper index for searching efficiently" do
-        [ FilteredArtwork, FilteredArtist, FilteredOther].each do |klass| 
+        [ FilteredArtwork, FilteredArtist, FilteredOther].each do |klass|
           klass.create_indexes
         end
         index_collection = FilteredArtwork.collection.db.collection('mongoid_fulltext.artworks_and_artists')
         ngram_indexes = index_collection.index_information.find_all{ |name, definition| definition['key'].has_key?('ngram') }
         ngram_indexes.length.should == 1
         keys = ngram_indexes.first[1]['key'].keys
-        expected_keys = ['ngram','score', 'filter_values.is_fuzzy', 'filter_values.is_awesome', 
+        expected_keys = ['ngram','score', 'filter_values.is_fuzzy', 'filter_values.is_awesome',
                          'filter_values.is_foobar', 'filter_values.is_artwork', 'filter_values.is_artist', 'filter_values.colors?'].sort
         keys.sort.should == expected_keys
       end
@@ -455,10 +459,7 @@ module Mongoid
         ['warho', 'rand'].each do |query|
           results = ExternalArtist.fulltext_search(query, { :return_scores => true })
           results.length.should > 0
-          results.map{ |result| result[-1] if result[0].to_s.starts_with?(query)}
-                 .compact
-                 .inject(true){ |accum, item| accum &= (item >= 1 and item < 2) }
-                 .should be_true
+          results.map{ |result| result[-1] if result[0].to_s.starts_with?(query)}.compact.inject(true){ |accum, item| accum &= (item >= 1 and item < 2) }.should be_true
         end
       end
       
@@ -466,10 +467,7 @@ module Mongoid
         ['andy', 'warhol', 'mao'].each do |query|
           results = ExternalArtist.fulltext_search(query, { :return_scores => true })
           results.length.should > 0
-          results.map{ |result| result[-1] if result[0].to_s.split(' ').member?(query) }
-                 .compact
-                 .inject(true){ |accum, item| accum &= (item >= 2) }
-                 .should be_true
+          results.map{ |result| result[-1] if result[0].to_s.split(' ').member?(query) }.compact.inject(true){ |accum, item| accum &= (item >= 2) }.should be_true
         end
       end
       
@@ -530,8 +528,8 @@ module Mongoid
       
       it "removes a single record from the index" do
         flowers1.remove_from_ngram_index
-        BasicArtwork.fulltext_search('flower').length.should == 1        
-      end      
+        BasicArtwork.fulltext_search('flower').length.should == 1
+      end
     end
     
     context "update_ngram_index" do
@@ -768,7 +766,9 @@ module Mongoid
       context "with an unknown query operator used to override the default $all" do
         context "with a fulltext search passing red, green, and blue to the colors filter" do
           it "should raise an error" do
-            -> {FilteredArtwork.fulltext_search(title, :colors? => {:unknown => [red,green,blue]})}.should raise_error(Mongoid::FullTextSearch::UnknownFilterQueryOperator)
+            lambda {
+              FilteredArtwork.fulltext_search(title, :colors? => {:unknown => [red,green,blue]})
+            }.should raise_error(Mongoid::FullTextSearch::UnknownFilterQueryOperator)
           end
         end
       end
