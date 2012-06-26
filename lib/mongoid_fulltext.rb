@@ -1,9 +1,5 @@
 require 'mongoid_indexes'
-if RUBY_VERSION >= "1.9.0"
-  require 'unicode_utils'
-else
-  require 'diacritics_fu'
-end
+require 'unicode_utils'
 require 'cgi'
 
 module Mongoid::FullTextSearch
@@ -72,39 +68,40 @@ module Mongoid::FullTextSearch
     end
 
     def fulltext_search_ensure_indexes(index_name, config)
-      db = collection.db
-      coll = db.collection(index_name)
+      db = collection.database
+      coll = db[index_name]
 
       # The order of filters matters when the same index is used from two or more collections.
       filter_indexes = (config[:filters] || []).map do |key,value|
-        ["filter_values.#{key}", Mongo::ASCENDING]
+        ["filter_values.#{key}", 1]
       end.sort_by { |filter_index| filter_index[0] }
       
-      index_definition = [['ngram', Mongo::ASCENDING], ['score', Mongo::DESCENDING]].concat(filter_indexes)
+      index_definition = [['ngram', 1], ['score', -1]].concat(filter_indexes)
 
       # Since the definition of the index could have changed, we'll clean up by
       # removing any indexes that aren't on the exact.
       correct_keys = index_definition.map{ |field_def| field_def[0] }
       all_filter_keys = filter_indexes.map{ |field_def| field_def[0] }
-      coll.index_information.each do |name, definition|
-        keys = definition['key'].keys
+      coll.indexes.each do |idef|
+        keys = idef['key'].keys
         next if !keys.member?('ngram')
         all_filter_keys |= keys.find_all{ |key| key.starts_with?('filter_values.') }
         if keys & correct_keys != correct_keys
-          Mongoid.logger.info "Dropping #{name} [#{keys & correct_keys} <=> #{correct_keys}]" if Mongoid.logger
-          coll.drop_index(name)
+          Mongoid.logger.info "Dropping #{idef['name']} [#{keys & correct_keys} <=> #{correct_keys}]" if Mongoid.logger
+          coll.indexes.drop(idef['key'])
         end
       end
 
       if all_filter_keys.length > filter_indexes.length
-        filter_indexes = all_filter_keys.map { |key| [key, Mongo::ASCENDING] }.sort_by { |filter_index| filter_index[0] }
-        index_definition = [['ngram', Mongo::ASCENDING], ['score', Mongo::DESCENDING]].concat(filter_indexes)
+        filter_indexes = all_filter_keys.map {|key| [key, 1] }.sort_by { |filter_index| filter_index[0] }
+        index_definition = [['ngram', 1], ['score', -1]].concat(filter_indexes)
       end
       
       Mongoid.logger.info "Ensuring fts_index on #{coll.name}: #{index_definition}" if Mongoid.logger
-      coll.ensure_index(index_definition, { :name => 'fts_index' })
+      coll.indexes.create(Hash[index_definition], { :name => 'fts_index' })
+
       Mongoid.logger.info "Ensuring document_id index on #{coll.name}" if Mongoid.logger
-      coll.ensure_index([['document_id', Mongo::ASCENDING]]) # to make removes fast
+      coll.indexes.create('document_id' => 1) # to make removes fast
     end
     
     def fulltext_search(query_string, options={})
@@ -123,9 +120,9 @@ module Mongoid::FullTextSearch
 
       # For each ngram, construct the query we'll use to pull index documents and
       # get a count of the number of index documents containing that n-gram
-      ordering = [['score', Mongo::DESCENDING]]
+      ordering = {'score' => -1}
       limit = self.mongoid_fulltext_config[index_name][:max_candidate_set_size]
-      coll = collection.db.collection(index_name)
+      coll = collection.database[index_name]
       cursors = ngrams.map do |ngram|
         query = {'ngram' => ngram[0]}
         query.update(map_query_filters options)
@@ -141,15 +138,15 @@ module Mongoid::FullTextSearch
       results_so_far = 0
       candidates_list = cursors.map do |doc|
         next if doc[:count] == 0
-        query_options = {}
+        query_result = coll.find(doc[:query])
         if results_so_far >= limit
-          query_options = {:sort => ordering, :limit => max_results}
+          query_result = query_result.sort(ordering).limit(max_results)
         elsif doc[:count] > limit - results_so_far
-          query_options = {:sort => ordering, :limit => limit - results_so_far}
+          query_result = query_result.sort(ordering).limit(limit - results_so_far)
         end
         results_so_far += doc[:count]
         ngram_score = ngrams[doc[:ngram][0]]
-        Hash[coll.find(doc[:query], query_options).map do |candidate|
+        Hash[query_result.map do |candidate|
                [candidate['document_id'],
                 {:clazz => candidate['class'], :score => candidate['score'] * ngram_score}]
              end]
@@ -177,7 +174,7 @@ module Mongoid::FullTextSearch
     end
     
     def instantiate_mapreduce_result(result)
-      result[:clazz].constantize.find(:first, :conditions => {'_id' => result[:id]})
+      result[:clazz].constantize.find(result[:id])
     end
     
     def instantiate_mapreduce_results(results, options)
@@ -266,8 +263,8 @@ module Mongoid::FullTextSearch
     
     def remove_from_ngram_index
       self.mongoid_fulltext_config.each_pair do |index_name, fulltext_config|
-        coll = collection.db.collection(index_name)
-        coll.remove({'class' => self.name})
+        coll = collection.database[index_name]
+        coll.find({'class' => self.name}).remove_all
       end
     end
     
@@ -308,8 +305,8 @@ module Mongoid::FullTextSearch
       end
 
       # remove existing ngrams from external index
-      coll = collection.db.collection(index_name)
-      coll.remove({'document_id' => self._id})
+      coll = collection.database[index_name.to_sym]
+      coll.find({'document_id' => self._id}).remove_all
       # extract ngrams from fields
       field_values = fulltext_config[:ngram_fields].map { |field| self.send(field) }
       ngrams = field_values.inject({}) { |accum, item| accum.update(self.class.all_ngrams(item, fulltext_config, false))}
@@ -336,8 +333,8 @@ module Mongoid::FullTextSearch
 
   def remove_from_ngram_index
     self.mongoid_fulltext_config.each_pair do |index_name, fulltext_config|
-      coll = collection.db.collection(index_name)
-      coll.remove({'document_id' => self._id})
+      coll = collection.database[index_name]
+      coll.find({'document_id' => self._id}).remove_all
     end
   end
 
