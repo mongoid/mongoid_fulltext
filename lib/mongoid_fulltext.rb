@@ -188,7 +188,7 @@ module Mongoid::FullTextSearch
       return {} if str.nil?
 
       if config[:remove_accents]
-        str = UnicodeUtils.nfkd(str).gsub(/[^\x00-\x7F]/,'')
+        str = UnicodeUtils.nfkd(str)
       end
 
       # Remove any characters that aren't in the alphabet and aren't word separators

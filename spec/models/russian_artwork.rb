@@ -6,5 +6,5 @@ class RussianArtwork
   Alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789абвгдежзиклмнопрстуфхцчшщъыьэюя'
 
   field :title
-  fulltext_search_in :title, :remove_accents => false, :alphabet => Alphabet
+  fulltext_search_in :title, :alphabet => Alphabet
 end
