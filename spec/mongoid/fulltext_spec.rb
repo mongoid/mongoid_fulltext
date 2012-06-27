@@ -1,3 +1,4 @@
+# coding: utf-8
 require 'spec_helper'
 
 module Mongoid
@@ -779,6 +780,18 @@ module Mongoid
             }.should raise_error(Mongoid::FullTextSearch::UnknownFilterQueryOperator)
           end
         end
+      end
+
+      context "should properly work with non-latin strings (i.e. cyrillic)" do
+        let!(:morning) { RussianArtwork.create(:title => "Утро в сосновом лесу Шишкин Morning in a Pine Forest Shishkin") }
+
+        it "should find a match if query is non-latin string" do
+          # RussianArtwork is just like BasicArtwork, except that we set :alphabet to
+          # 'abcdefghijklmnopqrstuvwxyz0123456789абвгдежзиклмнопрстуфхцчшщъыьэюя'
+          RussianArtwork.fulltext_search("shishkin").first.should == morning
+          RussianArtwork.fulltext_search("шишкин").first.should == morning
+        end
+
       end
     end
 
