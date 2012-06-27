@@ -279,6 +279,8 @@ Additional indexing/query options can be used as parameters to `fulltext_search_
     * When set to any other type of object, the document's index will not be updated.
 * `reindex_immediately`: whether models will be reindexed automatically upon saves or updates. Defaults to true. When set to false, the class-level `update_ngram_index` method can be called to perform reindexing.
 
+If you work with Cyrillic texts, use this option: `:alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789абвгдежзиклмнопрстуфхцчшщъыьэюя'`.
+
 Array filters
 -------------
 

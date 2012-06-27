@@ -190,14 +190,14 @@ module Mongoid::FullTextSearch
 
       if config[:remove_accents]
         if defined?(UnicodeUtils)
-          str = UnicodeUtils.nfkd(str).gsub(/[^\x00-\x7F]/,'')
+          str = UnicodeUtils.nfkd(str)
         elsif defined?(DiacriticsFu)
           str = DiacriticsFu::escape(str)
         end
       end
 
       # Remove any characters that aren't in the alphabet and aren't word separators
-      filtered_str = str.mb_chars.to_s.downcase.split('').find_all{ |ch| config[:alphabet][ch] or config[:word_separators][ch] }.join('')
+      filtered_str = str.mb_chars.downcase.to_s.split('').find_all{ |ch| config[:alphabet][ch] or config[:word_separators][ch] }.join('')
       
       # Figure out how many ngrams to extract from the string. If we can't afford to extract all ngrams,
       # step over the string in evenly spaced strides to extract ngrams. For example, to extract 3 3-letter
