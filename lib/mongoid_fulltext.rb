@@ -23,7 +23,7 @@ module Mongoid::FullTextSearch
         index_name = 'mongoid_fulltext.index_%s_%s' % [self.name.downcase, self.mongoid_fulltext_config.count]
       end
 
-      config = { 
+      config = {
         :alphabet => 'abcdefghijklmnopqrstuvwxyz0123456789 ',
         :word_separators => "-_ \n\t",
         :ngram_width => 3,
@@ -34,17 +34,17 @@ module Mongoid::FullTextSearch
         :max_candidate_set_size => 1000,
         :remove_accents => true,
         :reindex_immediately => true,
-        :stop_words => Hash[['i', 'a', 's', 't', 'me', 'my', 'we', 'he', 'it', 'am', 'is', 'be', 'do', 'an', 'if', 
-                             'or', 'as', 'of', 'at', 'by', 'to', 'up', 'in', 'on', 'no', 'so', 'our', 'you', 'him', 
-                             'his', 'she', 'her', 'its', 'who', 'are', 'was', 'has', 'had', 'did', 'the', 'and', 
-                             'but', 'for', 'out', 'off', 'why', 'how', 'all', 'any', 'few', 'nor', 'not', 'own', 
-                             'too', 'can', 'don', 'now', 'ours', 'your', 'hers', 'they', 'them', 'what', 'whom', 
-                             'this', 'that', 'were', 'been', 'have', 'does', 'with', 'into', 'from', 'down', 'over', 
-                             'then', 'once', 'here', 'when', 'both', 'each', 'more', 'most', 'some', 'such', 'only', 
-                             'same', 'than', 'very', 'will', 'just', 'yours', 'their', 'which', 'these', 'those', 
-                             'being', 'doing', 'until', 'while', 'about', 'after', 'above', 'below', 'under', 
-                             'again', 'there', 'where', 'other', 'myself', 'itself', 'theirs', 'having', 'during', 
-                             'before', 'should', 'himself', 'herself', 'because', 'against', 'between', 'through', 
+        :stop_words => Hash[['i', 'a', 's', 't', 'me', 'my', 'we', 'he', 'it', 'am', 'is', 'be', 'do', 'an', 'if',
+                             'or', 'as', 'of', 'at', 'by', 'to', 'up', 'in', 'on', 'no', 'so', 'our', 'you', 'him',
+                             'his', 'she', 'her', 'its', 'who', 'are', 'was', 'has', 'had', 'did', 'the', 'and',
+                             'but', 'for', 'out', 'off', 'why', 'how', 'all', 'any', 'few', 'nor', 'not', 'own',
+                             'too', 'can', 'don', 'now', 'ours', 'your', 'hers', 'they', 'them', 'what', 'whom',
+                             'this', 'that', 'were', 'been', 'have', 'does', 'with', 'into', 'from', 'down', 'over',
+                             'then', 'once', 'here', 'when', 'both', 'each', 'more', 'most', 'some', 'such', 'only',
+                             'same', 'than', 'very', 'will', 'just', 'yours', 'their', 'which', 'these', 'those',
+                             'being', 'doing', 'until', 'while', 'about', 'after', 'above', 'below', 'under',
+                             'again', 'there', 'where', 'other', 'myself', 'itself', 'theirs', 'having', 'during',
+                             'before', 'should', 'himself', 'herself', 'because', 'against', 'between', 'through',
                              'further', 'yourself', 'ourselves', 'yourselves', 'themselves'].map{ |x| [x,true] }]
       }
       
@@ -68,45 +68,46 @@ module Mongoid::FullTextSearch
     end
 
     def fulltext_search_ensure_indexes(index_name, config)
-      db = collection.db
-      coll = db.collection(index_name)
+      db = collection.database
+      coll = db[index_name]
 
       # The order of filters matters when the same index is used from two or more collections.
       filter_indexes = (config[:filters] || []).map do |key,value|
-        ["filter_values.#{key}", Mongo::ASCENDING]
+        ["filter_values.#{key}", 1]
       end.sort_by { |filter_index| filter_index[0] }
       
-      index_definition = [['ngram', Mongo::ASCENDING], ['score', Mongo::DESCENDING]].concat(filter_indexes)
+      index_definition = [['ngram', 1], ['score', -1]].concat(filter_indexes)
 
       # Since the definition of the index could have changed, we'll clean up by
       # removing any indexes that aren't on the exact.
       correct_keys = index_definition.map{ |field_def| field_def[0] }
       all_filter_keys = filter_indexes.map{ |field_def| field_def[0] }
-      coll.index_information.each do |name, definition|
-        keys = definition['key'].keys
+      coll.indexes.each do |idef|
+        keys = idef['key'].keys
         next if !keys.member?('ngram')
         all_filter_keys |= keys.find_all{ |key| key.starts_with?('filter_values.') }
         if keys & correct_keys != correct_keys
-          Mongoid.logger.info "Dropping #{name} [#{keys & correct_keys} <=> #{correct_keys}]" if Mongoid.logger
-          coll.drop_index(name)
+          Mongoid.logger.info "Dropping #{idef['name']} [#{keys & correct_keys} <=> #{correct_keys}]" if Mongoid.logger
+          coll.indexes.drop(idef['key'])
         end
       end
 
       if all_filter_keys.length > filter_indexes.length
-        filter_indexes = all_filter_keys.map { |key| [key, Mongo::ASCENDING] }.sort_by { |filter_index| filter_index[0] }
-        index_definition = [['ngram', Mongo::ASCENDING], ['score', Mongo::DESCENDING]].concat(filter_indexes)        
+        filter_indexes = all_filter_keys.map {|key| [key, 1] }.sort_by { |filter_index| filter_index[0] }
+        index_definition = [['ngram', 1], ['score', -1]].concat(filter_indexes)
       end
       
       Mongoid.logger.info "Ensuring fts_index on #{coll.name}: #{index_definition}" if Mongoid.logger
-      coll.ensure_index(index_definition, { :name => 'fts_index' })
+      coll.indexes.create(Hash[index_definition], { :name => 'fts_index' })
+
       Mongoid.logger.info "Ensuring document_id index on #{coll.name}" if Mongoid.logger
-      coll.ensure_index([['document_id', Mongo::ASCENDING]]) # to make removes fast
+      coll.indexes.create('document_id' => 1) # to make removes fast
     end
     
     def fulltext_search(query_string, options={})
       max_results = options.has_key?(:max_results) ? options.delete(:max_results) : 10
       return_scores = options.has_key?(:return_scores) ? options.delete(:return_scores) : false
-      if self.mongoid_fulltext_config.count > 1 and !options.has_key?(:index) 
+      if self.mongoid_fulltext_config.count > 1 and !options.has_key?(:index)
         error_message = '%s is indexed by multiple full-text indexes. You must specify one by passing an :index_name parameter'
         raise UnspecifiedIndexError, error_message % self.name, caller
       end
@@ -117,12 +118,12 @@ module Mongoid::FullTextSearch
       ngrams = all_ngrams(query_string, self.mongoid_fulltext_config[index_name])
       return [] if ngrams.empty?
 
-      # For each ngram, construct the query we'll use to pull index documents and 
+      # For each ngram, construct the query we'll use to pull index documents and
       # get a count of the number of index documents containing that n-gram
-      ordering = [['score', Mongo::DESCENDING]]
+      ordering = {'score' => -1}
       limit = self.mongoid_fulltext_config[index_name][:max_candidate_set_size]
-      coll = collection.db.collection(index_name)
-      cursors = ngrams.map do |ngram| 
+      coll = collection.database[index_name]
+      cursors = ngrams.map do |ngram|
         query = {'ngram' => ngram[0]}
         query.update(map_query_filters options)
         count = coll.find(query).count
@@ -130,23 +131,23 @@ module Mongoid::FullTextSearch
       end.sort!{ |record1, record2| record1[:count] <=> record2[:count] }
 
       # Using the queries we just constructed and the n-gram frequency counts we
-      # just computed, pull in about *:max_candidate_set_size* candidates by 
-      # considering the n-grams in order of increasing frequency. When we've 
-      # spent all *:max_candidate_set_size* candidates, pull the top-scoring 
+      # just computed, pull in about *:max_candidate_set_size* candidates by
+      # considering the n-grams in order of increasing frequency. When we've
+      # spent all *:max_candidate_set_size* candidates, pull the top-scoring
       # *max_results* candidates for each remaining n-gram.
       results_so_far = 0
       candidates_list = cursors.map do |doc|
         next if doc[:count] == 0
-        query_options = {}
+        query_result = coll.find(doc[:query])
         if results_so_far >= limit
-          query_options = {:sort => ordering, :limit => max_results}
+          query_result = query_result.sort(ordering).limit(max_results)
         elsif doc[:count] > limit - results_so_far
-          query_options = {:sort => ordering, :limit => limit - results_so_far}
+          query_result = query_result.sort(ordering).limit(limit - results_so_far)
         end
         results_so_far += doc[:count]
         ngram_score = ngrams[doc[:ngram][0]]
-        Hash[coll.find(doc[:query], query_options).map do |candidate|
-               [candidate['document_id'], 
+        Hash[query_result.map do |candidate|
+               [candidate['document_id'],
                 {:clazz => candidate['class'], :score => candidate['score'] * ngram_score}]
              end]
       end.compact
@@ -161,8 +162,8 @@ module Mongoid::FullTextSearch
       while !candidates_list.empty?
         candidates = candidates_list.pop
         scores = candidates.map do |candidate_id, data|
-          {:id => candidate_id, 
-           :clazz => data[:clazz], 
+          {:id => candidate_id,
+           :clazz => data[:clazz],
            :score => data[:score] + candidates_list.map{ |others| (others.delete(candidate_id) || {:score => 0})[:score] }.sum
            }
         end
@@ -173,7 +174,7 @@ module Mongoid::FullTextSearch
     end
     
     def instantiate_mapreduce_result(result)
-      result[:clazz].constantize.find(:first, :conditions => {'_id' => result[:id]})
+      result[:clazz].constantize.find(result[:id])
     end
     
     def instantiate_mapreduce_results(results, options)
@@ -188,7 +189,11 @@ module Mongoid::FullTextSearch
       return {} if str.nil?
 
       if config[:remove_accents]
-        str = UnicodeUtils.nfkd(str)
+        if defined?(UnicodeUtils)
+          str = UnicodeUtils.nfkd(str)
+        elsif defined?(DiacriticsFu)
+          str = DiacriticsFu::escape(str)
+        end
       end
 
       # Remove any characters that aren't in the alphabet and aren't word separators
@@ -203,7 +208,7 @@ module Mongoid::FullTextSearch
         step_size = 1
       end
       
-      # Create an array of records of the form {:ngram => x, :score => y} for all ngrams that occur in the 
+      # Create an array of records of the form {:ngram => x, :score => y} for all ngrams that occur in the
       # input string using the step size that we just computed. Let score(x,y) be the score of string x
       # compared with string y - assigning scores to ngrams with the square root-based scoring function
       # below and multiplying scores of matching ngrams together yields a score function that has the
@@ -258,8 +263,8 @@ module Mongoid::FullTextSearch
     
     def remove_from_ngram_index
       self.mongoid_fulltext_config.each_pair do |index_name, fulltext_config|
-        coll = collection.db.collection(index_name)
-        coll.remove({'class' => self.name})
+        coll = collection.database[index_name]
+        coll.find({'class' => self.name}).remove_all
       end
     end
     
@@ -300,8 +305,8 @@ module Mongoid::FullTextSearch
       end
 
       # remove existing ngrams from external index
-      coll = collection.db.collection(index_name)
-      coll.remove({'document_id' => self._id})
+      coll = collection.database[index_name.to_sym]
+      coll.find({'document_id' => self._id}).remove_all
       # extract ngrams from fields
       field_values = fulltext_config[:ngram_fields].map { |field| self.send(field) }
       ngrams = field_values.inject({}) { |accum, item| accum.update(self.class.all_ngrams(item, fulltext_config, false))}
@@ -310,9 +315,9 @@ module Mongoid::FullTextSearch
       filter_values = nil
       if fulltext_config.has_key?(:filters)
         filter_values = Hash[fulltext_config[:filters].map do |key,value|
-          begin 
-            [key, value.call(self)] 
-          rescue 
+          begin
+            [key, value.call(self)]
+          rescue
             # Suppress any exceptions caused by filters
           end
         end.compact]
@@ -328,8 +333,8 @@ module Mongoid::FullTextSearch
 
   def remove_from_ngram_index
     self.mongoid_fulltext_config.each_pair do |index_name, fulltext_config|
-      coll = collection.db.collection(index_name)
-      coll.remove({'document_id' => self._id})
+      coll = collection.database[index_name]
+      coll.find({'document_id' => self._id}).remove_all
     end
   end
 
