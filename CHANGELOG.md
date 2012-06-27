@@ -2,6 +2,7 @@
 --------------------
 
 * [#2](https://github.com/artsy/mongoid_fulltext/pull/2): Upgrade to Mongoid 3.0 - [@volmer](https://github.com/volmer).
+* [#1](https://github.com/artsy/mongoid_fulltext/pull/1): Fix: downcase destroys non-latin strings - [@netoneko](https://github.com/netoneko).
 
 0.5.8 (3/8/2012)
 ----------------
