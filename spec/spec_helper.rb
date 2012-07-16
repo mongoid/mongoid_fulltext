@@ -14,10 +14,10 @@ Dir["#{File.dirname(__FILE__)}/models/**/*.rb"].each { |f| require f }
 
 RSpec.configure do |c|
   c.before(:each) do
-    Mongoid.session(:default).drop
+    Mongoid.purge!
   end
   c.after(:all) do
-    Mongoid.session(:default).drop
+    Mongoid.purge!
   end
 end
 
