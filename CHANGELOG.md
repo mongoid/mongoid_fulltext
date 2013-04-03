@@ -1,4 +1,10 @@
-0.6.0 (Next Release)
+0.6.1 (next release)
+--------------------
+
+* [#5](https://github.com/artsy/mongoid_fulltext/pull/5): Upgrade to
+Mongoid > 3.0 and < 4.0 - [@simi](https://github.com/simi).
+
+0.6.0 (7/16/2012)
 --------------------
 
 * [#2](https://github.com/artsy/mongoid_fulltext/pull/2): Upgrade to Mongoid 3.0 - [@volmer](https://github.com/volmer).
