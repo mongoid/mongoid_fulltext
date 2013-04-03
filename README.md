@@ -13,7 +13,7 @@ indexing hundreds of thousands of HTML documents.
 Install
 --------------
 
-Version 0.6.0 or newer of this gem requires Ruby 1.9.3 and Mongoid 3.0. 
+Version 0.6.1 or newer of this gem requires Ruby 1.9.3 and works with Mongoid 3.x.
 Use version 0.5.x for Mongoid 2.4.x and Ruby 1.8.7, 1.9.2 or 1.9.3.
 
 For Ruby 1.8.7 and/or Mongoid 2.x use [mongoid_fulltext 0.5.x](https://github.com/artsy/mongoid_fulltext/tree/0.5-stable).
