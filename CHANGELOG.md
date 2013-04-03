@@ -1,8 +1,7 @@
 0.6.1 (4/3/2013)
 --------------------
 
-* [#6](https://github.com/artsy/mongoid_fulltext/pull/6): Upgrade to
-Mongoid ~> 3.0 - [@simi](https://github.com/simi).
+* [#6](https://github.com/artsy/mongoid_fulltext/pull/6): Upgrade to Mongoid ~> 3.0 - [@simi](https://github.com/simi).
 
 0.6.0 (7/16/2012)
 --------------------
