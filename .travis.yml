@@ -4,3 +4,4 @@ rvm:
 env:
   - MONGOID=3.0.0
   - MONGOID=3.1.0
+services: mongodb
