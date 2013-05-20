@@ -123,6 +123,7 @@ module Mongoid::FullTextSearch
       
       ordering_field = options.has_key?(:order_field) ? options.delete(:order_field) : 'score'
       ordering_type = options.has_key?(:order_type) ? options.delete(:order_type) : -1
+      ordering = {}
       ordering[ordering_field] = ordering_type
       limit = self.mongoid_fulltext_config[index_name][:max_candidate_set_size]
       coll = collection.database[index_name]
