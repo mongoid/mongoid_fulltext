@@ -3,7 +3,7 @@ source "http://rubygems.org"
 if ENV['TRAVIS']
   gem "mongoid", "~> #{ENV['MONGOID']}"
 else
-  gem "mongoid", "~> 4"
+  gem "mongoid", "~> 4.0.0.beta1"
 end
 
 gem "unicode_utils", "~> 1.0.0"
