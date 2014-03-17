@@ -75,7 +75,7 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<jeweler>, ["~> 1.8.3"])
     end
   else
-    s.add_dependency(%q<mongoid>, ["~> 4"])
+    s.add_dependency(%q<mongoid>, ["~> 4.0.0.beta1"])
     s.add_dependency(%q<unicode_utils>, ["~> 1.0.0"])
     s.add_dependency(%q<bundler>, [">= 0"])
     s.add_dependency(%q<rspec>, ["~> 2.10.0"])
