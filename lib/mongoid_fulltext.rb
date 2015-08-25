@@ -120,7 +120,11 @@ module Mongoid::FullTextSearch
 
       # For each ngram, construct the query we'll use to pull index documents and
       # get a count of the number of index documents containing that n-gram
-      ordering = {'score' => -1}
+      
+      ordering_field = options.has_key?(:order_field) ? options.delete(:order_field) : 'score'
+      ordering_type = options.has_key?(:order_type) ? options.delete(:order_type) : -1
+      ordering = {}
+      ordering[ordering_field] = ordering_type
       limit = self.mongoid_fulltext_config[index_name][:max_candidate_set_size]
       coll = collection.database[index_name]
       cursors = ngrams.map do |ngram|
