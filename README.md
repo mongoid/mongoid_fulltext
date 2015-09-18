@@ -16,7 +16,7 @@ indexing hundreds of thousands of HTML documents.
 Install
 --------------
 
-Version 0.6.1 or newer of this gem requires Ruby 1.9.3 and works with Mongoid 3.x.
+Version 0.6.1 or newer of this gem requires Ruby 1.9.3 and works with Mongoid 3 and 4.
 Use version 0.5.x for Mongoid 2.4.x and Ruby 1.8.7, 1.9.2 or 1.9.3.
 
 For Ruby 1.8.7 and/or Mongoid 2.x use [mongoid_fulltext 0.5.x](https://github.com/artsy/mongoid_fulltext/tree/0.5-stable).
@@ -398,7 +398,7 @@ Fork the project. Make your feature addition or bug fix with tests. Send a pull 
 Copyright and License
 ---------------------
 
-MIT License, see [LICENSE](https://github.com/aaw/mongoid_fulltext/blob/master/LICENSE) for details.
+MIT License, see [LICENSE](LICENSE) for details.
 
-(c) 2011-2012 [Art.sy Inc.](http://artsy.github.com)
+(c) 2011-2015 [Artsy Inc.](http://artsy.github.io)
 
