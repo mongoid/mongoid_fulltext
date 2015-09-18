@@ -9,7 +9,7 @@ ENV['MONGOID_ENV'] = 'test'
 Mongoid.load!("#{File.dirname(__FILE__)}/config/mongoid.yml")
 Mongoid.logger = nil
 
-require File.expand_path("../../lib/mongoid_fulltext", __FILE__)
+require File.expand_path('../../lib/mongoid_fulltext', __FILE__)
 Dir["#{File.dirname(__FILE__)}/models/**/*.rb"].each { |f| require f }
 
 RSpec.configure do |c|
@@ -20,4 +20,3 @@ RSpec.configure do |c|
     Mongoid.purge!
   end
 end
-

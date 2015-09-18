@@ -4,5 +4,4 @@ class BasicArtwork
 
   field :title
   fulltext_search_in :title
-
 end

@@ -1,15 +1,23 @@
-source "http://rubygems.org"
+source 'http://rubygems.org'
 
-if ENV['TRAVIS']
-  gem "mongoid", "~> #{ENV['MONGOID']}"
+case version = ENV['MONGOID_VERSION'] || '4'
+when /4/
+  gem 'mongoid', '~> 4.0'
+when /3.1.0/
+  gem 'mongoid', '~> 3.1.0'
+when /3.0.0/
+  gem 'mongoid', '~> 3.0.0'
 else
-  gem "mongoid", "~> 3.0"
+  gem 'mongoid', version
 end
 
-gem "unicode_utils", "~> 1.0.0"
+gemspec
 
-group :development, :test do
-  gem "bundler"
-  gem "rspec", "~> 2.10.0"
-  gem "jeweler", "~> 1.8.3"
+group :test do
+  gem 'rspec'
+end
+
+group :development do
+  gem 'rake'
+  gem 'rubocop', '0.34.1'
 end

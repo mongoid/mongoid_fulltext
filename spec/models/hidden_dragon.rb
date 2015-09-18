@@ -2,5 +2,4 @@
 class HiddenDragon
   include Mongoid::Document
   include Mongoid::FullTextSearch
-  
 end

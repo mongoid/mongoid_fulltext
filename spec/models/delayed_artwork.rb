@@ -3,6 +3,5 @@ class DelayedArtwork
   include Mongoid::FullTextSearch
 
   field :title
-  fulltext_search_in :title, :reindex_immediately => false
-
+  fulltext_search_in :title, reindex_immediately: false
 end
