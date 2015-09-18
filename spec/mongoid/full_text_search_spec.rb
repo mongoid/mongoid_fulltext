@@ -216,7 +216,11 @@ describe Mongoid::FullTextSearch do
       expect(ExternalArtist.fulltext_search('warhol')).to eq([warhol, andy_warhol])
       index_collection = ExternalArtist.collection.database[ExternalArtist.mongoid_fulltext_config.keys.first]
       index_collection.find('document_id' => warhol.id).each do |idef|
-        index_collection.find('_id' => idef['_id']).update('document_id' => Moped::BSON::ObjectId.new)
+        if Mongoid::Compatibility::Version.mongoid3?
+          index_collection.find('_id' => idef['_id']).update('document_id' => Moped::BSON::ObjectId.new)
+        elsif Mongoid::Compatibility::Version.mongoid4?
+          index_collection.find('_id' => idef['_id']).update('document_id' => BSON::ObjectId.new)
+        end
       end
       # We should no longer be able to find warhol, but that shouldn't keep it from returning results
       expect(ExternalArtist.fulltext_search('warhol')).to eq([andy_warhol])

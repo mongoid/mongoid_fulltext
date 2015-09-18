@@ -1,5 +1,7 @@
 require 'mongoid'
-require_relative 'indexes'
+require 'mongoid/compatibility'
+require_relative 'indexes' if Mongoid::Compatibility::Version.mongoid3?
+require_relative 'indexable' if Mongoid::Compatibility::Version.mongoid4?
 require 'unicode_utils'
 require 'cgi'
 
