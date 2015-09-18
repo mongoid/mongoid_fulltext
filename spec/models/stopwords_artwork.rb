@@ -3,8 +3,7 @@ class StopwordsArtwork
   include Mongoid::FullTextSearch
 
   field :title
-  fulltext_search_in :title, 
-  :index_full_words => true,
-  :stop_words => { 'and' => true, 'by' => true}
-
+  fulltext_search_in :title,
+                     index_full_words: true,
+                     stop_words: { 'and' => true, 'by' => true }
 end
