@@ -1,9 +1,9 @@
-0.6.2 (Next Release)
+0.7.0 (Next Release)
 --------------------
 
+* Compatible with Mongoid 4 and 5 - [@dblock](https://github.com/dblock).
 * Rewritten .gemspec, removed Jeweler - [@dblock](https://github.com/dblock).
 * Added RuboCop - [@dblock](https://github.com/dblock).
-* Added compatibility with Mongoid 4 - [@dblock](https://github.com/dblock).
 * Your contribution here.
 
 0.6.1 (4/3/2013)

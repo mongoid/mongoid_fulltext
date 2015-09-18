@@ -1,7 +1,10 @@
 require 'mongoid'
 require 'mongoid/compatibility'
-require_relative 'indexes' if Mongoid::Compatibility::Version.mongoid3?
-require_relative 'indexable' if Mongoid::Compatibility::Version.mongoid4?
+if Mongoid::Compatibility::Version.mongoid3?
+  require_relative 'indexes'
+else
+  require_relative 'indexable'
+end
 require 'unicode_utils'
 require 'cgi'
 
@@ -88,8 +91,11 @@ module Mongoid::FullTextSearch
         keys = idef['key'].keys
         next unless keys.member?('ngram')
         all_filter_keys |= keys.find_all { |key| key.starts_with?('filter_values.') }
-        if keys & correct_keys != correct_keys
-          Mongoid.logger.info "Dropping #{idef['name']} [#{keys & correct_keys} <=> #{correct_keys}]" if Mongoid.logger
+        next unless keys & correct_keys != correct_keys
+        Mongoid.logger.info "Dropping #{idef['name']} [#{keys & correct_keys} <=> #{correct_keys}]" if Mongoid.logger
+        if Mongoid::Compatibility::Version.mongoid5?
+          coll.indexes.drop_one(idef['key'])
+        else
           coll.indexes.drop(idef['key'])
         end
       end
@@ -100,10 +106,18 @@ module Mongoid::FullTextSearch
       end
 
       Mongoid.logger.info "Ensuring fts_index on #{coll.name}: #{index_definition}" if Mongoid.logger
-      coll.indexes.create(Hash[index_definition], name: 'fts_index')
+      if Mongoid::Compatibility::Version.mongoid5?
+        coll.indexes.create_one(Hash[index_definition], name: 'fts_index')
+      else
+        coll.indexes.create(Hash[index_definition], name: 'fts_index')
+      end
 
       Mongoid.logger.info "Ensuring document_id index on #{coll.name}" if Mongoid.logger
-      coll.indexes.create('document_id' => 1) # to make removes fast
+      if Mongoid::Compatibility::Version.mongoid5?
+        coll.indexes.create_one('document_id' => 1) # to make removes fast
+      else
+        coll.indexes.create('document_id' => 1) # to make removes fast
+      end
     end
 
     def fulltext_search(query_string, options = {})
@@ -266,7 +280,11 @@ module Mongoid::FullTextSearch
     def remove_from_ngram_index
       mongoid_fulltext_config.each_pair do |index_name, _fulltext_config|
         coll = collection.database[index_name]
-        coll.find('class' => name).remove_all
+        if Mongoid::Compatibility::Version.mongoid5?
+          coll.find('class' => name).delete_many
+        else
+          coll.find('class' => name).remove_all
+        end
       end
     end
 
@@ -308,7 +326,11 @@ module Mongoid::FullTextSearch
 
       # remove existing ngrams from external index
       coll = collection.database[index_name.to_sym]
-      coll.find('document_id' => _id).remove_all
+      if Mongoid::Compatibility::Version.mongoid5?
+        coll.find('document_id' => _id).delete_many
+      else
+        coll.find('document_id' => _id).remove_all
+      end
       # extract ngrams from fields
       field_values = fulltext_config[:ngram_fields].map { |field| send(field) }
       ngrams = field_values.inject({}) { |accum, item| accum.update(self.class.all_ngrams(item, fulltext_config, false)) }
@@ -328,7 +350,11 @@ module Mongoid::FullTextSearch
       ngrams.each_pair do |ngram, score|
         index_document = { 'ngram' => ngram, 'document_id' => _id, 'score' => score, 'class' => self.class.name }
         index_document['filter_values'] = filter_values if fulltext_config.key?(:filters)
-        coll.insert(index_document)
+        if Mongoid::Compatibility::Version.mongoid5?
+          coll.insert_one(index_document)
+        else
+          coll.insert(index_document)
+        end
       end
     end
   end
@@ -336,7 +362,11 @@ module Mongoid::FullTextSearch
   def remove_from_ngram_index
     mongoid_fulltext_config.each_pair do |index_name, _fulltext_config|
       coll = collection.database[index_name]
-      coll.find('document_id' => _id).remove_all
+      if Mongoid::Compatibility::Version.mongoid5?
+        coll.find('document_id' => _id).delete_many
+      else
+        coll.find('document_id' => _id).remove_all
+      end
     end
   end
 end
