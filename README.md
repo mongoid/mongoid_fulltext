@@ -1,5 +1,8 @@
-Mongoid Fulltext Search [![Build Status](https://secure.travis-ci.org/artsy/mongoid_fulltext.png)](http://travis-ci.org/artsy/mongoid_fulltext)
+Mongoid Fulltext Search
 =======================
+
+[![Build Status](https://secure.travis-ci.org/artsy/mongoid_fulltext.svg)](http://travis-ci.org/artsy/mongoid_fulltext)
+[![Gem Version](https://badge.fury.io/rb/mongoid_fulltext.svg)](http://badge.fury.io/rb/mongoid_fulltext)
 
 Full-text search using n-gram matching for the Mongoid ODM. Tested on MongoDB 1.6 and above, but
 probably works on earlier versions as well.
