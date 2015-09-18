@@ -220,6 +220,8 @@ describe Mongoid::FullTextSearch do
           index_collection.find('_id' => idef['_id']).update('document_id' => Moped::BSON::ObjectId.new)
         elsif Mongoid::Compatibility::Version.mongoid4?
           index_collection.find('_id' => idef['_id']).update('document_id' => BSON::ObjectId.new)
+        else
+          index_collection.find('_id' => idef['_id']).update_one('document_id' => BSON::ObjectId.new)
         end
       end
       # We should no longer be able to find warhol, but that shouldn't keep it from returning results
@@ -595,8 +597,12 @@ describe Mongoid::FullTextSearch do
     context 'incremental' do
       it 'removes an existing record' do
         coll = Mongoid.default_session['mongoid_fulltext.index_basicartwork_0']
-        coll.find('document_id' => flowers1._id).remove_all
-        expect(coll.find('document_id' => flowers1._id).one).to be nil
+        if Mongoid::Compatibility::Version.mongoid5?
+          coll.find('document_id' => flowers1._id).delete_many
+        else
+          coll.find('document_id' => flowers1._id).remove_all
+        end
+        expect(coll.find('document_id' => flowers1._id).first).to be nil
         flowers1.update_ngram_index
       end
     end
