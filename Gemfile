@@ -1,8 +1,10 @@
 source 'http://rubygems.org'
 
-case version = ENV['MONGOID_VERSION'] || '3.1'
-when /3/
-  gem 'mongoid', '~> 3.1'
+case version = ENV['MONGOID_VERSION'] || '3.1.0'
+when /3.1.0/
+  gem 'mongoid', '~> 3.1.0'
+when /3.0.0/
+  gem 'mongoid', '~> 3.0.0'
 else
   gem 'mongoid', version
 end
