@@ -1,10 +1,12 @@
 require 'mongoid'
 require 'mongoid/compatibility'
+
 if Mongoid::Compatibility::Version.mongoid3?
-  require_relative 'indexes'
+  require 'mongoid/full_text_search/indexes'
 else
-  require_relative 'indexable'
+  require 'mongoid/full_text_search/indexable'
 end
+
 require 'unicode_utils'
 require 'cgi'
 
