@@ -1,8 +1,7 @@
-0.7.1 (Next)
-------------
+0.7.1 (11/18/2015)
+------------------
 
 * [#24](https://github.com/artsy/mongoid_fulltext/pull/24): Fix: `undefined method 'create_indexes' for module 'Mongoid::Indexable::ClassMethods'` - [@dblock](https://github.com/dblock).
-* Your contribution here.
 
 0.7.0 (9/18/2015)
 -----------------
