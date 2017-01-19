@@ -1,3 +1,7 @@
+### 0.8.1 (Next)
+
+* Your contribution here.
+
 ### 0.8.0 (1/19/2017)
 
 * [#28](https://github.com/mongoid/mongoid_fulltext/pull/28): Moved to the mongoid organization - [@dblock](https://github.com/dblock).
