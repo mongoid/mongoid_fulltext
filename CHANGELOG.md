@@ -2,7 +2,8 @@
 ------------
 
 * [#28](https://github.com/mongoid/mongoid_fulltext/pull/28): Moved to the mongoid organization - [@dblock](https://github.com/dblock).
-* [#28](https://github.com/mongoid/mongoid_fulltext/pull/28): No longer tested on Ruby < 2.3.1 - [@dblock](https://github.com/dblock).
+* [#28](https://github.com/mongoid/mongoid_fulltext/pull/28): Only testing on Ruby 2.3.1 and MongoDB 3.2 - [@dblock](https://github.com/dblock).
+* [#28](https://github.com/mongoid/mongoid_fulltext/pull/29): Compatibility with Mongoid 6 - [@dblock](https://github.com/dblock).
 * Your contribution here.
 
 0.7.1 (11/18/2015)
