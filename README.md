@@ -2,8 +2,8 @@ Mongoid Fulltext Search
 =======================
 
 [![Gem Version](https://badge.fury.io/rb/mongoid_fulltext.svg)](http://badge.fury.io/rb/mongoid_fulltext)
-[![Build Status](https://secure.travis-ci.org/artsy/mongoid_fulltext.svg)](http://travis-ci.org/artsy/mongoid_fulltext)
-[![Code Climate](https://codeclimate.com/github/artsy/mongoid_fulltext/badges/gpa.svg)](https://codeclimate.com/github/artsy/mongoid_fulltext)
+[![Build Status](https://secure.travis-ci.org/mongoid/mongoid_fulltext.svg)](http://travis-ci.org/mongoid/mongoid_fulltext)
+[![Code Climate](https://codeclimate.com/github/mongoid/mongoid_fulltext/badges/gpa.svg)](https://codeclimate.com/github/mongoid/mongoid_fulltext)
 
 Full-text search using n-gram matching for the Mongoid ODM. Tested on MongoDB 1.6 and above, but
 probably works on earlier versions as well.
@@ -20,7 +20,7 @@ Install
 Version 0.6.1 or newer of this gem requires Ruby 1.9.3 or newer and works with Mongoid 3, 4 and 5.
 Use version 0.5.x for Mongoid 2.4.x and Ruby 1.8.7, 1.9.2 or 1.9.3.
 
-For Ruby 1.8.7 and/or Mongoid 2.x use [mongoid_fulltext 0.5.x](https://github.com/artsy/mongoid_fulltext/tree/0.5-stable).
+For Ruby 1.8.7 and/or Mongoid 2.x use [mongoid_fulltext 0.5.x](https://github.com/mongoid/mongoid_fulltext/tree/0.5-stable).
 
 ``` ruby
 gem 'mongoid_fulltext'

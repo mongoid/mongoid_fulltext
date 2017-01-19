@@ -1,12 +1,14 @@
 0.7.2 (Next)
 ------------
 
+* [#28](https://github.com/mongoid/mongoid_fulltext/pull/28): Moved to the mongoid organization - [@dblock](https://github.com/dblock).
+* [#28](https://github.com/mongoid/mongoid_fulltext/pull/28): No longer tested on Ruby < 2.3.1 - [@dblock](https://github.com/dblock).
 * Your contribution here.
 
 0.7.1 (11/18/2015)
 ------------------
 
-* [#24](https://github.com/artsy/mongoid_fulltext/pull/24): Fix: `undefined method 'create_indexes' for module 'Mongoid::Indexable::ClassMethods'` - [@dblock](https://github.com/dblock).
+* [#24](https://github.com/mongoid/mongoid_fulltext/pull/24): Fix: `undefined method 'create_indexes' for module 'Mongoid::Indexable::ClassMethods'` - [@dblock](https://github.com/dblock).
 
 0.7.0 (9/18/2015)
 -----------------
@@ -18,13 +20,13 @@
 0.6.1 (4/3/2013)
 ----------------
 
-* [#6](https://github.com/artsy/mongoid_fulltext/pull/6): Upgrade to Mongoid ~> 3.0 - [@simi](https://github.com/simi).
+* [#6](https://github.com/mongoid/mongoid_fulltext/pull/6): Upgrade to Mongoid ~> 3.0 - [@simi](https://github.com/simi).
 
 0.6.0 (7/16/2012)
 -----------------
 
-* [#2](https://github.com/artsy/mongoid_fulltext/pull/2): Upgrade to Mongoid 3.0 - [@volmer](https://github.com/volmer).
-* [#1](https://github.com/artsy/mongoid_fulltext/pull/1): Fix: downcase destroys non-latin strings - [@netoneko](https://github.com/netoneko).
+* [#2](https://github.com/mongoid/mongoid_fulltext/pull/2): Upgrade to Mongoid 3.0 - [@volmer](https://github.com/volmer).
+* [#1](https://github.com/mongoid/mongoid_fulltext/pull/1): Fix: downcase destroys non-latin strings - [@netoneko](https://github.com/netoneko).
 
 0.5.8 (3/8/2012)
 ----------------
