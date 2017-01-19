@@ -1,10 +1,9 @@
-### 0.7.2 (Next)
+### 0.8.0 (1/19/2017)
 
 * [#28](https://github.com/mongoid/mongoid_fulltext/pull/28): Moved to the mongoid organization - [@dblock](https://github.com/dblock).
 * [#28](https://github.com/mongoid/mongoid_fulltext/pull/29): Compatibility with Mongoid 6 - [@dblock](https://github.com/dblock).
 * [#28](https://github.com/mongoid/mongoid_fulltext/pull/28): Only testing on Ruby 2.3.1 and MongoDB 3.2 - [@dblock](https://github.com/dblock).
 * [#31](https://github.com/mongoid/mongoid_fulltext/pull/31): Added danger, PR linter - [@dblock](https://github.com/dblock).
-* Your contribution here.
 
 ### 0.7.1 (11/18/2015)
 
