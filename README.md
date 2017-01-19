@@ -5,21 +5,16 @@ Mongoid Fulltext Search
 [![Build Status](https://secure.travis-ci.org/mongoid/mongoid_fulltext.svg)](http://travis-ci.org/mongoid/mongoid_fulltext)
 [![Code Climate](https://codeclimate.com/github/mongoid/mongoid_fulltext/badges/gpa.svg)](https://codeclimate.com/github/mongoid/mongoid_fulltext)
 
-Full-text search using n-gram matching for the Mongoid ODM. Tested on MongoDB 1.6 and above, but
-probably works on earlier versions as well.
+Full-text search using n-gram matching for the Mongoid ODM.
 
-MongoDB introduced full-text search capabilities in v2.4, so this gem is a good fit for cases
-where you want something a little less than a full-blown indexing service. The mongoid_fulltext gem
-lets you do a fuzzy string search across relatively short strings, which makes it good for populating
-autocomplete boxes based on the display names of your Rails models but not appropriate for, say,
-indexing hundreds of thousands of HTML documents.
+MongoDB introduced full-text search capabilities in v2.4, so this gem is a good fit for cases where you want something a little less than a full-blown indexing service. The mongoid_fulltext gem
+lets you do a fuzzy string search across relatively short strings, which makes it good for populating autocomplete boxes based on the display names of your Rails models but not appropriate for, say, indexing hundreds of thousands of HTML documents.
 
 Install
 -------
 
-Version 0.6.1 or newer of this gem requires Ruby 1.9.3 or newer and works with Mongoid 3, 4 and 5.
+Version 0.6.1 or newer of this gem requires Ruby 1.9.3 or newer and works with Mongoid 3, 4, 5 and 6.
 Use version 0.5.x for Mongoid 2.4.x and Ruby 1.8.7, 1.9.2 or 1.9.3.
-
 For Ruby 1.8.7 and/or Mongoid 2.x use [mongoid_fulltext 0.5.x](https://github.com/mongoid/mongoid_fulltext/tree/0.5-stable).
 
 ``` ruby
@@ -401,5 +396,5 @@ Copyright and License
 
 MIT License, see [LICENSE](LICENSE) for details.
 
-(c) 2011-2015 [Artsy Inc.](http://artsy.github.io)
+(c) 2011-2017 [Artsy Inc.](http://artsy.github.io)
 
