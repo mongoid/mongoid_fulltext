@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.required_rubygems_version = '>= 1.3.6'
   s.files = `git ls-files`.split("\n")
   s.require_paths = ['lib']
-  s.homepage = 'https://github.com/artsy/mongoid_fulltext'
+  s.homepage = 'https://github.com/mongoid/mongoid_fulltext'
   s.licenses = ['MIT']
   s.summary = 'Full-text search for the Mongoid ORM, using n-grams extracted from text.'
   s.add_dependency 'mongoid', '>= 3.0'

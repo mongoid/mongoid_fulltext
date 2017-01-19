@@ -20,6 +20,6 @@ group :test do
 end
 
 group :development do
-  gem 'rake'
+  gem 'rake', '< 11'
   gem 'rubocop', '0.34.1'
 end

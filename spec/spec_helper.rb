@@ -7,6 +7,8 @@ require 'mongoid'
 ENV['MONGOID_ENV'] = 'test'
 
 require File.expand_path('../../lib/mongoid_fulltext', __FILE__)
+
+Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each { |f| require f }
 Dir["#{File.dirname(__FILE__)}/models/**/*.rb"].each { |f| require f }
 
 Mongoid.configure do |config|
