@@ -1,3 +1,5 @@
+sudo: false
+
 rvm:
   - 2.3.1
 
@@ -6,5 +8,13 @@ env:
   - MONGOID_VERSION=3.1.0
   - MONGOID_VERSION=4.0
   - MONGOID_VERSION=5.0
+  - MONGOID_VERSION=6.0
 
 services: mongodb
+
+addons:
+  apt:
+    sources:
+      - mongodb-3.2-precise
+    packages:
+      - mongodb-org-server
