@@ -1,5 +1,6 @@
 ### 0.8.1 (Next)
 
+* [#35](https://github.com/mongoid/mongoid_fulltext/pull/35): Mongoid 7 compatibility - [@tomasc](https://github.com/tomasc).
 * Your contribution here.
 
 ### 0.8.0 (1/19/2017)
