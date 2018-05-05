@@ -95,7 +95,7 @@ module Mongoid::FullTextSearch
         all_filter_keys |= keys.find_all { |key| key.starts_with?('filter_values.') }
         next unless keys & correct_keys != correct_keys
         Mongoid.logger.info "Dropping #{idef['name']} [#{keys & correct_keys} <=> #{correct_keys}]" if Mongoid.logger
-        if Mongoid::Compatibility::Version.mongoid5? || Mongoid::Compatibility::Version.mongoid6?
+        if Mongoid::Compatibility::Version.mongoid5_or_newer?
           coll.indexes.drop_one(idef['key'])
         else
           coll.indexes.drop(idef['key'])
@@ -108,14 +108,14 @@ module Mongoid::FullTextSearch
       end
 
       Mongoid.logger.info "Ensuring fts_index on #{coll.name}: #{index_definition}" if Mongoid.logger
-      if Mongoid::Compatibility::Version.mongoid5? || Mongoid::Compatibility::Version.mongoid6?
+      if Mongoid::Compatibility::Version.mongoid5_or_newer?
         coll.indexes.create_one(Hash[index_definition], name: 'fts_index')
       else
         coll.indexes.create(Hash[index_definition], name: 'fts_index')
       end
 
       Mongoid.logger.info "Ensuring document_id index on #{coll.name}" if Mongoid.logger
-      if Mongoid::Compatibility::Version.mongoid5? || Mongoid::Compatibility::Version.mongoid6?
+      if Mongoid::Compatibility::Version.mongoid5_or_newer?
         coll.indexes.create_one('document_id' => 1) # to make removes fast
       else
         coll.indexes.create('document_id' => 1) # to make removes fast
@@ -143,6 +143,7 @@ module Mongoid::FullTextSearch
       coll = collection.database[index_name]
       cursors = ngrams.map do |ngram|
         query = { 'ngram' => ngram[0] }
+        query.update(document_type_filters)
         query.update(map_query_filters options)
         count = coll.find(query).count
         { ngram: ngram, count: count, query: query }
@@ -282,7 +283,7 @@ module Mongoid::FullTextSearch
     def remove_from_ngram_index
       mongoid_fulltext_config.each_pair do |index_name, _fulltext_config|
         coll = collection.database[index_name]
-        if Mongoid::Compatibility::Version.mongoid5? || Mongoid::Compatibility::Version.mongoid6?
+        if Mongoid::Compatibility::Version.mongoid5_or_newer?
           coll.find('class' => name).delete_many
         else
           coll.find('class' => name).remove_all
@@ -295,6 +296,13 @@ module Mongoid::FullTextSearch
     end
 
     private
+
+    # add filter by type according to SCI classes
+    def document_type_filters
+      return {} unless fields['_type'].present?
+      kls = ([self] + descendants).map(&:to_s)
+      { 'document_type' => { "$in" => kls } }
+    end
 
     # Take a list of filters to be mapped so they can update the query
     # used upon the fulltext search of the ngrams
@@ -328,7 +336,7 @@ module Mongoid::FullTextSearch
 
       # remove existing ngrams from external index
       coll = collection.database[index_name.to_sym]
-      if Mongoid::Compatibility::Version.mongoid5? || Mongoid::Compatibility::Version.mongoid6?
+      if Mongoid::Compatibility::Version.mongoid5_or_newer?
         coll.find('document_id' => _id).delete_many
       else
         coll.find('document_id' => _id).remove_all
@@ -350,9 +358,9 @@ module Mongoid::FullTextSearch
       end
       # insert new ngrams in external index
       ngrams.each_pair do |ngram, score|
-        index_document = { 'ngram' => ngram, 'document_id' => _id, 'score' => score, 'class' => self.class.name }
+        index_document = { 'ngram' => ngram, 'document_id' => _id, 'document_type' => model_name.to_s, 'score' => score, 'class' => self.class.name }
         index_document['filter_values'] = filter_values if fulltext_config.key?(:filters)
-        if Mongoid::Compatibility::Version.mongoid5? || Mongoid::Compatibility::Version.mongoid6?
+        if Mongoid::Compatibility::Version.mongoid5_or_newer?
           coll.insert_one(index_document)
         else
           coll.insert(index_document)
@@ -364,7 +372,7 @@ module Mongoid::FullTextSearch
   def remove_from_ngram_index
     mongoid_fulltext_config.each_pair do |index_name, _fulltext_config|
       coll = collection.database[index_name]
-      if Mongoid::Compatibility::Version.mongoid5? || Mongoid::Compatibility::Version.mongoid6?
+      if Mongoid::Compatibility::Version.mongoid5_or_newer?
         coll.find('document_id' => _id).delete_many
       else
         coll.find('document_id' => _id).remove_all
