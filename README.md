@@ -281,7 +281,7 @@ It is also possible to pre-empt the search with Monogid criteria:
 MyDoc.where(value: 10).fulltext_search(…)
 ```
 
-Please note that this will not work in case an index is shared by multiple classes (that are not connected through inheritance).
+Please note that this will not work in case an index is shared by multiple classes (that are not connected through inheritance), since a criteria applies only to one class.
 
 Indexing Options
 ----------------
