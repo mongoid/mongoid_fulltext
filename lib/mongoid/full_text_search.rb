@@ -192,7 +192,11 @@ module Mongoid::FullTextSearch
     end
 
     def instantiate_mapreduce_result(result)
-      result[:clazz].constantize.find(result[:id])
+      if criteria.selector.empty?
+        result[:clazz].constantize.find(result[:id])
+      else
+        criteria.where(_id: result[:id]).first
+      end
     end
 
     def instantiate_mapreduce_results(results, options)
