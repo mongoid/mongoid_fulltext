@@ -597,7 +597,7 @@ describe Mongoid::FullTextSearch do
     context 'incremental' do
       it 'removes an existing record' do
         coll = Mongoid.default_session['mongoid_fulltext.index_basicartwork_0']
-        if Mongoid::Compatibility::Version.mongoid5? || Mongoid::Compatibility::Version.mongoid6?
+        if Mongoid::Compatibility::Version.mongoid5_or_newer?
           coll.find('document_id' => flowers1._id).delete_many
         else
           coll.find('document_id' => flowers1._id).remove_all
