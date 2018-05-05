@@ -15,15 +15,14 @@ Mongoid.configure do |config|
   config.connect_to('mongoid_fulltext_test')
 end
 
+Mongoid.logger.level = Logger::INFO
+Mongo::Logger.logger.level = Logger::INFO if Mongoid::Compatibility::Version.mongoid5_or_newer?
+
 RSpec.configure do |c|
   c.before :each do
     Mongoid.purge!
   end
   c.after :all do
     Mongoid.purge!
-  end
-  c.before :all do
-    Mongoid.logger.level = Logger::INFO
-    Mongo::Logger.logger.level = Logger::INFO if Mongoid::Compatibility::Version.mongoid5_or_newer?
   end
 end
