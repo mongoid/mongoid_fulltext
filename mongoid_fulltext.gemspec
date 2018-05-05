@@ -13,8 +13,8 @@ Gem::Specification.new do |s|
   s.homepage = 'https://github.com/mongoid/mongoid_fulltext'
   s.licenses = ['MIT']
   s.summary = 'Full-text search for the Mongoid ORM, using n-grams extracted from text.'
-  s.add_dependency 'mongoid', '>= 3.0'
-  s.add_dependency 'mongoid-compatibility', '>= 0.5.1'
+  s.add_dependency 'mongoid', '>= 3.0', '< 8'
+  s.add_dependency 'mongoid-compatibility'
   s.add_dependency 'unicode_utils'
   s.add_development_dependency 'database_cleaner'
 end
