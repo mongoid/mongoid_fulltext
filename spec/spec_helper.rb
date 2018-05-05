@@ -25,6 +25,9 @@ end
 Mongoid.logger.level = Logger::INFO
 Mongo::Logger.logger.level = Logger::INFO if Mongoid::Compatibility::Version.mongoid5_or_newer?
 
+DatabaseCleaner.orm = :mongoid
+DatabaseCleaner.strategy = :truncation
+
 RSpec.configure do |c|
   c.before :each do
     DatabaseCleaner.clean
