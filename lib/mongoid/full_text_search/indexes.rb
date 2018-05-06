@@ -8,7 +8,9 @@ module Mongoid
           return unless mongoid_fulltext_config
           mongoid_fulltext_config.each_pair do |index_name, fulltext_config|
             ::I18n.available_locales.each do |locale|
-              fulltext_search_ensure_indexes(localized_index_name(index_name, locale), fulltext_config)
+              fulltext_search_ensure_indexes(
+                localized_index_name(index_name, locale), fulltext_config
+              )
             end
           end
         end

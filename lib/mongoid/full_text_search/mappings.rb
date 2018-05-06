@@ -7,11 +7,11 @@ module Mongoid
         def fulltext_search_in(*args)
           self.mongoid_fulltext_config = {} if mongoid_fulltext_config.nil?
           options = args.last.is_a?(Hash) ? args.pop : {}
-          if options.key?(:index_name)
-            index_name = options[:index_name]
-          else
-            index_name = 'mongoid_fulltext.index_%s_%s' % [name.downcase, mongoid_fulltext_config.count]
-          end
+          index_name = if options.key?(:index_name)
+                         options[:index_name]
+                       else
+                         format('mongoid_fulltext.index_%s_%s', name.downcase, mongoid_fulltext_config.count)
+                       end
 
           config = {
             alphabet: 'abcdefghijklmnopqrstuvwxyz0123456789 ',
@@ -24,7 +24,7 @@ module Mongoid
             max_candidate_set_size: 1000,
             remove_accents: true,
             reindex_immediately: true,
-            stop_words: Hash[%w(i a s t me my we he it am is be do an if
+            stop_words: Hash[%w[i a s t me my we he it am is be do an if
                                 or as of at by to up in on no so our you him
                                 his she her its who are was has had did the and
                                 but for out off why how all any few nor not own
@@ -35,7 +35,7 @@ module Mongoid
                                 being doing until while about after above below under
                                 again there where other myself itself theirs having during
                                 before should himself herself because against between through
-                                further yourself ourselves yourselves themselves).map { |x| [x, true] }]
+                                further yourself ourselves yourselves themselves].map { |x| [x, true] }]
           }
 
           config.update(options)
@@ -95,7 +95,7 @@ module Mongoid
               filter_values = Hash[fulltext_config[:filters].map do |key, value|
                 begin
                   [key, value.call(self)]
-                rescue
+                rescue StandardError
                   # Suppress any exceptions caused by filters
                 end
               end.compact]

@@ -12,7 +12,7 @@ module Mongoid
           return_scores = options.key?(:return_scores) ? options.delete(:return_scores) : false
           if mongoid_fulltext_config.count > 1 && !options.key?(:index)
             error_message = '%s is indexed by multiple full-text indexes. You must specify one by passing an :index_name parameter'
-            fail UnspecifiedIndexError, error_message % name, caller
+            raise UnspecifiedIndexError, error_message % name, caller
           end
           index_name = options.key?(:index) ? options.delete(:index) : mongoid_fulltext_config.keys.first
 
@@ -30,7 +30,7 @@ module Mongoid
           cursors = ngrams.map do |ngram|
             query = { 'ngram' => ngram[0] }
             query.update(document_type_filters)
-            query.update(map_query_filters options)
+            query.update(map_query_filters(options))
             count = coll.find(query).count
             { ngram: ngram, count: count, query: query }
           end.sort! { |record1, record2| record1[:count] <=> record2[:count] }
@@ -69,8 +69,7 @@ module Mongoid
             scores = candidates.map do |candidate_id, data|
               { id: candidate_id,
                 clazz: data[:clazz],
-                score: data[:score] + candidates_list.map { |others| (others.delete(candidate_id) || { score: 0 })[:score] }.sum
-               }
+                score: data[:score] + candidates_list.map { |others| (others.delete(candidate_id) || { score: 0 })[:score] }.sum }
             end
             all_scores.concat(scores)
           end
@@ -100,25 +99,25 @@ module Mongoid
         def document_type_filters
           return {} unless fields['_type'].present?
           kls = ([self] + descendants).map(&:to_s)
-          { 'document_type' => { "$in" => kls } }
+          { 'document_type' => { '$in' => kls } }
         end
 
         # Take a list of filters to be mapped so they can update the query
         # used upon the fulltext search of the ngrams
         def map_query_filters(filters)
-          Hash[filters.map do|key, value|
+          Hash[filters.map do |key, value|
             case value
             when Hash then
               if value.key? :any then format_query_filter('$in', key, value[:any])
               elsif value.key? :all then format_query_filter('$all', key, value[:all])
-              else fail UnknownFilterQueryOperator, value.keys.join(','), caller end
+              else raise UnknownFilterQueryOperator, value.keys.join(','), caller end
             else format_query_filter('$all', key, value)
             end
           end]
         end
 
         def format_query_filter(operator, key, value)
-          ['filter_values.%s' % key, { operator => [value].flatten }]
+          [format('filter_values.%s', key), { operator => [value].flatten }]
         end
       end
     end
