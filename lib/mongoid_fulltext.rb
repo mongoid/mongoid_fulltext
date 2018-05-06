@@ -3,7 +3,6 @@ require 'mongoid/compatibility'
 
 require 'mongoid/full_text_search'
 
-require 'unicode_utils'
 require 'cgi'
 
 module Mongoid

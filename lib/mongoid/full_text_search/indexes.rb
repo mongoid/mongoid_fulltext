@@ -1,4 +1,4 @@
-require 'mongoid/full_text_search/index_definition'
+require 'mongoid/full_text_search/services/index_definition'
 
 module Mongoid
   module FullTextSearch
@@ -28,7 +28,7 @@ module Mongoid
           db = collection.database
           coll = db[index_name]
           filters = config.fetch(:filters, [])
-          index_definition = IndexDefinition.call(coll, filters)
+          index_definition = Services::IndexDefinition.call(coll, filters)
 
           Mongoid.logger.info("Ensuring fts_index on #{coll.name}: #{index_definition}") if Mongoid.logger
           coll.indexes.send CREATE_INDEX_METHOD_NAME, Hash[index_definition], name: 'fts_index'

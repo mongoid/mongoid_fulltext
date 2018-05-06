@@ -1,3 +1,5 @@
+require 'mongoid/full_text_search/services/calculate_ngrams'
+
 module Mongoid
   module FullTextSearch
     module Searchable
@@ -7,16 +9,19 @@ module Mongoid
         def fulltext_search(query_string, options = {})
           max_results = options.key?(:max_results) ? options.delete(:max_results) : 10
           return_scores = options.key?(:return_scores) ? options.delete(:return_scores) : false
+
           if mongoid_fulltext_config.count > 1 && !options.key?(:index)
             error_message = '%s is indexed by multiple full-text indexes. You must specify one by passing an :index_name parameter'
             raise UnspecifiedIndexError, error_message % name, caller
           end
+
           index_name = options.key?(:index) ? options.delete(:index) : mongoid_fulltext_config.keys.first
 
           loc_index_name = localized_index_name(index_name, ::I18n.locale)
+
           # Options hash should only contain filters after this point
 
-          ngrams = all_ngrams(query_string, mongoid_fulltext_config[index_name])
+          ngrams = Services::CalculateNgrams.call(query_string, mongoid_fulltext_config[index_name])
           return [] if ngrams.empty?
 
           # For each ngram, construct the query we'll use to pull index documents and
@@ -75,11 +80,8 @@ module Mongoid
         end
 
         def instantiate_mapreduce_result(result)
-          if criteria.selector.empty?
-            result[:clazz].constantize.find(result[:id])
-          else
-            criteria.where(_id: result[:id]).first
-          end
+          return result[:clazz].constantize.find(result[:id]) if criteria.selector.empty?
+          criteria.where(_id: result[:id]).first
         end
 
         def instantiate_mapreduce_results(results, options)
@@ -96,21 +98,24 @@ module Mongoid
         def document_type_filters
           return {} unless fields['_type'].present?
           kls = ([self] + descendants).map(&:to_s)
-          { 'class' => { '$in' => kls } }
+          { class: { '$in' => kls } }
         end
 
         # Take a list of filters to be mapped so they can update the query
         # used upon the fulltext search of the ngrams
         def map_query_filters(filters)
-          Hash[filters.map do |key, value|
-            case value
-            when Hash then
-              if value.key? :any then format_query_filter('$in', key, value[:any])
-              elsif value.key? :all then format_query_filter('$all', key, value[:all])
-              else raise UnknownFilterQueryOperator, value.keys.join(','), caller end
-            else format_query_filter('$all', key, value)
+          Hash[
+            filters.map do |key, value|
+              case value
+              when Hash then
+                if value.key? :any then format_query_filter('$in', key, value[:any])
+                elsif value.key? :all then format_query_filter('$all', key, value[:all])
+                else raise UnknownFilterQueryOperator, value.keys.join(','), caller
+                end
+              else format_query_filter('$all', key, value)
+              end
             end
-          end]
+          ]
         end
 
         def format_query_filter(operator, key, value)

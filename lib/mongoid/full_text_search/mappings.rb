@@ -1,3 +1,5 @@
+require 'mongoid/full_text_search/services/calculate_ngrams'
+
 module Mongoid
   module FullTextSearch
     module Mappings
@@ -11,7 +13,7 @@ module Mongoid
             "mongoid_fulltext.index_#{name.downcase}_#{mongoid_fulltext_config.count}"
           end
 
-          config = default_config.update(options)
+          config = DEFAULT_CONFIG.dup.update(options)
 
           args = [:to_s] if args.empty?
           config[:ngram_fields] = args
@@ -28,34 +30,13 @@ module Mongoid
           all.each(&:update_ngram_index)
         end
 
-        private
-
-        def default_config
-          {
-            alphabet: 'abcdefghijklmnopqrstuvwxyz0123456789 ',
-            word_separators: "-_ \n\t",
-            ngram_width: 3,
-            max_ngrams_to_search: 6,
-            apply_prefix_scoring_to_all_words: true,
-            index_full_words: true,
-            index_short_prefixes: false,
-            max_candidate_set_size: 1000,
-            remove_accents: true,
-            reindex_immediately: true,
-            stop_words: Hash[
-              %w[i a s t me my we he it am is be do an if
-                 or as of at by to up in on no so our you him
-                 his she her its who are was has had did the and
-                 but for out off why how all any few nor not own
-                 too can don now ours your hers they them what whom
-                 this that were been have does with into from down over
-                 then once here when both each more most some such only
-                 same than very will just yours their which these those
-                 being doing until while about after above below under
-                 again there where other myself itself theirs having during
-                 before should himself herself because against between through
-                 further yourself ourselves yourselves themselves].map { |x| [x, true] }]
-          }
+        def remove_from_ngram_index
+          mongoid_fulltext_config.each_pair do |index_name, _|
+            ::I18n.available_locales.each do |locale|
+              coll = collection.database[localized_index_name(index_name, locale)]
+              coll.find(class: name).send(DELETE_FROM_INDEX_METHOD_NAME)
+            end
+          end
         end
       end
 
@@ -85,7 +66,7 @@ module Mongoid
             end
 
             ngrams = field_values.inject({}) do |accum, item|
-              accum.update(self.class.all_ngrams(item, fulltext_config, false))
+              accum.update(Services::CalculateNgrams.call(item, fulltext_config, false))
             end
 
             return if ngrams.empty?
