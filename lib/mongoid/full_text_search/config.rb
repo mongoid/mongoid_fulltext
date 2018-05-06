@@ -4,7 +4,9 @@ module Mongoid
       extend ActiveSupport::Concern
 
       included do
-        cattr_accessor :mongoid_fulltext_config
+        cattr_accessor :mongoid_fulltext_config do
+          {}
+        end
       end
     end
   end

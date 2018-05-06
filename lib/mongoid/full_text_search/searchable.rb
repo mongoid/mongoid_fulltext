@@ -1,8 +1,5 @@
 module Mongoid
   module FullTextSearch
-    class UnspecifiedIndexError < StandardError; end
-    class UnknownFilterQueryOperator < StandardError; end
-
     module Searchable
       extend ActiveSupport::Concern
 
@@ -99,7 +96,7 @@ module Mongoid
         def document_type_filters
           return {} unless fields['_type'].present?
           kls = ([self] + descendants).map(&:to_s)
-          { 'document_type' => { '$in' => kls } }
+          { 'class' => { '$in' => kls } }
         end
 
         # Take a list of filters to be mapped so they can update the query

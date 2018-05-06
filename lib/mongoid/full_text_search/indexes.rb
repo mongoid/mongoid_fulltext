@@ -31,17 +31,10 @@ module Mongoid
           index_definition = IndexDefinition.call(coll, filters)
 
           Mongoid.logger.info("Ensuring fts_index on #{coll.name}: #{index_definition}") if Mongoid.logger
-          coll.indexes.send create_index_method_name, Hash[index_definition], name: 'fts_index'
+          coll.indexes.send CREATE_INDEX_METHOD_NAME, Hash[index_definition], name: 'fts_index'
 
           Mongoid.logger.info("Ensuring document_id index on #{coll.name}") if Mongoid.logger
-          coll.indexes.send create_index_method_name, { document_id: 1 }
-        end
-
-        private
-
-        def create_index_method_name
-          return :create unless Mongoid::Compatibility::Version.mongoid5_or_newer?
-          :create_one
+          coll.indexes.send CREATE_INDEX_METHOD_NAME, { document_id: 1 }
         end
       end
     end

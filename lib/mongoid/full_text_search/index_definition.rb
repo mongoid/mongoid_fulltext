@@ -17,7 +17,7 @@ module Mongoid
           all_filter_keys |= keys.find_all { |key| key.starts_with?('filter_values.') }
           next unless keys & correct_keys != correct_keys
           Mongoid.logger.info "Dropping #{idef['name']} [#{keys & correct_keys} <=> #{correct_keys}]" if Mongoid.logger
-          coll.indexes.send drop_index_method_name, idef['key']
+          coll.indexes.send DROP_INDEX_METHOD_NAME, idef['key']
         end
 
         if all_filter_keys.length > filter_indexes.length
@@ -26,13 +26,6 @@ module Mongoid
         end
 
         res
-      end
-
-      private
-
-      def drop_index_method_name
-        return :drop unless Mongoid::Compatibility::Version.mongoid5_or_newer?
-        :drop_one
       end
 
       # The order of filters matters when the same index is used from two or more collections.
