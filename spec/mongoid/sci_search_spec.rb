@@ -8,21 +8,21 @@ describe Mongoid::FullTextSearch do
     let!(:my_further_inherited_doc) { MyFurtherInheritedDoc.create!(title: 'My Inherited Doc') }
 
     context 'root class returns results for subclasses' do
-      let(:result) { MyDoc.fulltext_search("doc") }
+      let(:result) { MyDoc.fulltext_search('doc') }
       it { expect(result).to include my_doc }
       it { expect(result).to include my_inherited_doc }
       it { expect(result).to include my_further_inherited_doc }
     end
 
     context 'child class does not return superclass' do
-      let(:result) { MyInheritedDoc.fulltext_search("doc") }
+      let(:result) { MyInheritedDoc.fulltext_search('doc') }
       it { expect(result).not_to include my_doc }
       it { expect(result).to include my_inherited_doc }
       it { expect(result).to include my_further_inherited_doc }
     end
 
     context 'child class does not return superclass' do
-      let(:result) { MyFurtherInheritedDoc.fulltext_search("doc") }
+      let(:result) { MyFurtherInheritedDoc.fulltext_search('doc') }
       it { expect(result).not_to include my_doc }
       it { expect(result).not_to include my_inherited_doc }
       it { expect(result).to include my_further_inherited_doc }
