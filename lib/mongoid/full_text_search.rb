@@ -56,11 +56,13 @@ module Mongoid::FullTextSearch
       }
 
       config.update(options)
+
       args = [:to_s] if args.empty?
       config[:ngram_fields] = args
       config[:alphabet] = Hash[config[:alphabet].split('').map { |ch| [ch, ch] }]
       config[:word_separators] = Hash[config[:word_separators].split('').map { |ch| [ch, ch] }]
       mongoid_fulltext_config[index_name] = config
+
       before_save(:update_ngram_index) if config[:reindex_immediately]
       before_destroy :remove_from_ngram_index
     end
