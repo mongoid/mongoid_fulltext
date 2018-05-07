@@ -22,9 +22,6 @@ Mongoid.configure do |config|
   config.connect_to('mongoid_fulltext_test')
 end
 
-Mongoid.logger.level = Logger::INFO
-Mongo::Logger.logger.level = Logger::INFO if Mongoid::Compatibility::Version.mongoid5_or_newer?
-
 RSpec.configure do |c|
   c.before :each do
     DatabaseCleaner.clean
