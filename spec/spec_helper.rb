@@ -28,6 +28,8 @@ Mongo::Logger.logger.level = Logger::INFO if Mongoid::Compatibility::Version.mon
 DatabaseCleaner.orm = :mongoid
 DatabaseCleaner.strategy = :truncation
 
+::I18n.available_locales = %i(en cs)
+
 RSpec.configure do |c|
   c.before :each do
     DatabaseCleaner.clean
