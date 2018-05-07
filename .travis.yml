@@ -2,11 +2,14 @@ sudo: false
 
 matrix:
   include:
+    - rvm: 2.5.0
+      env:
+        - MONGOID_VERSION=7.0
+      before_script:
+        - bundle exec danger
     - rvm: 2.3.1
       env:
         - MONGOID_VERSION=6.0
-      before_script:
-        - bundle exec danger
     - rvm: 2.3.1
       env:
         - MONGOID_VERSION=5.0
@@ -25,6 +28,6 @@ services: mongodb
 addons:
   apt:
     sources:
-      - mongodb-3.2-precise
+      - mongodb-3.4-precise
     packages:
       - mongodb-org-server
