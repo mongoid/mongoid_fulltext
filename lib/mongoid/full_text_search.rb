@@ -304,7 +304,7 @@ module Mongoid::FullTextSearch
     def document_type_filters
       return {} unless fields['_type'].present?
       kls = ([self] + descendants).map(&:to_s)
-      { 'document_type' => { "$in" => kls } }
+      { 'document_type' => { '$in' => kls } }
     end
 
     # Take a list of filters to be mapped so they can update the query
