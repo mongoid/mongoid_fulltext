@@ -355,6 +355,8 @@ describe Mongoid::FullTextSearch do
     # fields as well as the union of all the filter fields to allow for efficient lookups.
 
     it 'creates a proper index for searching efficiently' do
+      # see https://github.com/mongoid/mongoid_fulltext/pull/39
+      pending unless Mongoid::Compatibility::Version.mongoid5_or_newer?
       [FilteredArtwork, FilteredArtist, FilteredOther].each(&:create_indexes)
       index_collection = FilteredArtwork.collection.database['mongoid_fulltext.artworks_and_artists']
       ngram_indexes = []
@@ -609,6 +611,8 @@ describe Mongoid::FullTextSearch do
 
     context 'mongoid indexes' do
       it 'can re-create dropped indexes' do
+        # see https://github.com/mongoid/mongoid_fulltext/pull/39
+        pending unless Mongoid::Compatibility::Version.mongoid5_or_newer?
         # there're no indexes by default as Mongoid.autocreate_indexes is set to false
         # but mongo will automatically attempt to index _id in the background
         expect(Mongoid.default_session['mongoid_fulltext.index_basicartwork_0'].indexes.count).to be <= 1
