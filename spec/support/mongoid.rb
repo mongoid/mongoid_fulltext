@@ -4,4 +4,4 @@ if Mongoid::Compatibility::Version.mongoid5_or_newer?
       default_client
     end
   end
-end if Mongoid::Compatibility::Version.mongoid5_or_newer?
+end
