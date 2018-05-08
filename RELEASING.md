@@ -27,7 +27,7 @@ Generally, `mongoid_fulltext` should be released with enthusiasm but care. Relea
 7. Commit your changes...
 
     ```bash
-    git add README.md CHANGELOG.md lib/mongoid/compatibility/self.rb
+    git add README.md CHANGELOG.md lib/mongoid/full_text_search/version.rb
     git commit -m "Preparing for release, 0.4.0."
     git push origin master
     ```
