@@ -7,7 +7,7 @@ require 'database_cleaner'
 
 ENV['MONGOID_ENV'] = 'test'
 
-require File.expand_path('../../lib/mongoid_fulltext', __FILE__)
+require File.expand_path('../lib/mongoid_fulltext', __dir__)
 
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each { |f| require f }
 Dir["#{File.dirname(__FILE__)}/models/**/*.rb"].each { |f| require f }

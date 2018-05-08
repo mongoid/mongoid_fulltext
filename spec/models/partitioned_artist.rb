@@ -8,7 +8,7 @@ class PartitionedArtist
   fulltext_search_in :full_name,
                      index_name: 'mongoid_fulltext.partitioned_artists',
                      filters: {
-                       has_exhibitions: ->(x) { x.exhibitions.size > 0 },
+                       has_exhibitions: ->(x) { !x.exhibitions.empty? },
                        exhibitions: ->(x) { [x.exhibitions].flatten }
                      }
 end

@@ -24,11 +24,11 @@ module Mongoid::FullTextSearch
     def fulltext_search_in(*args)
       self.mongoid_fulltext_config = {} if mongoid_fulltext_config.nil?
       options = args.last.is_a?(Hash) ? args.pop : {}
-      if options.key?(:index_name)
-        index_name = options[:index_name]
-      else
-        index_name = 'mongoid_fulltext.index_%s_%s' % [name.downcase, mongoid_fulltext_config.count]
-      end
+      index_name = if options.key?(:index_name)
+                     options[:index_name]
+                   else
+                     'mongoid_fulltext.index_%s_%s' % [name.downcase, mongoid_fulltext_config.count]
+                   end
 
       config = {
         alphabet: 'abcdefghijklmnopqrstuvwxyz0123456789 ',
@@ -41,7 +41,7 @@ module Mongoid::FullTextSearch
         max_candidate_set_size: 1000,
         remove_accents: true,
         reindex_immediately: true,
-        stop_words: Hash[%w(i a s t me my we he it am is be do an if
+        stop_words: Hash[%w[i a s t me my we he it am is be do an if
                             or as of at by to up in on no so our you him
                             his she her its who are was has had did the and
                             but for out off why how all any few nor not own
@@ -52,7 +52,7 @@ module Mongoid::FullTextSearch
                             being doing until while about after above below under
                             again there where other myself itself theirs having during
                             before should himself herself because against between through
-                            further yourself ourselves yourselves themselves).map { |x| [x, true] }]
+                            further yourself ourselves yourselves themselves].map { |x| [x, true] }]
       }
 
       config.update(options)
@@ -127,7 +127,7 @@ module Mongoid::FullTextSearch
       return_scores = options.key?(:return_scores) ? options.delete(:return_scores) : false
       if mongoid_fulltext_config.count > 1 && !options.key?(:index)
         error_message = '%s is indexed by multiple full-text indexes. You must specify one by passing an :index_name parameter'
-        fail UnspecifiedIndexError, error_message % name, caller
+        raise UnspecifiedIndexError, error_message % name, caller
       end
       index_name = options.key?(:index) ? options.delete(:index) : mongoid_fulltext_config.keys.first
 
@@ -183,8 +183,7 @@ module Mongoid::FullTextSearch
         scores = candidates.map do |candidate_id, data|
           { id: candidate_id,
             clazz: data[:clazz],
-            score: data[:score] + candidates_list.map { |others| (others.delete(candidate_id) || { score: 0 })[:score] }.sum
-           }
+            score: data[:score] + candidates_list.map { |others| (others.delete(candidate_id) || { score: 0 })[:score] }.sum }
         end
         all_scores.concat(scores)
       end
@@ -225,11 +224,11 @@ module Mongoid::FullTextSearch
       # Figure out how many ngrams to extract from the string. If we can't afford to extract all ngrams,
       # step over the string in evenly spaced strides to extract ngrams. For example, to extract 3 3-letter
       # ngrams from 'abcdefghijk', we'd want to extract 'abc', 'efg', and 'ijk'.
-      if bound_number_returned
-        step_size = [((filtered_str.length - config[:ngram_width]).to_f / config[:max_ngrams_to_search]).ceil, 1].max
-      else
-        step_size = 1
-      end
+      step_size = if bound_number_returned
+                    [((filtered_str.length - config[:ngram_width]).to_f / config[:max_ngrams_to_search]).ceil, 1].max
+                  else
+                    1
+                  end
 
       # Create an array of records of the form {:ngram => x, :score => y} for all ngrams that occur in the
       # input string using the step size that we just computed. Let score(x,y) be the score of string x
@@ -238,12 +237,12 @@ module Mongoid::FullTextSearch
       # property that score(x,y) > score(x,z) for any string z containing y and score(x,y) > score(x,z)
       # for any string z contained in y.
       ngram_array = (0..filtered_str.length - config[:ngram_width]).step(step_size).map do |i|
-        if i == 0 || (config[:apply_prefix_scoring_to_all_words] && \
+        score = if i == 0 || (config[:apply_prefix_scoring_to_all_words] && \
                       config[:word_separators].key?(filtered_str[i - 1].chr))
-          score = Math.sqrt(1 + 1.0 / filtered_str.length)
-        else
-          score = Math.sqrt(2.0 / filtered_str.length)
-        end
+                  Math.sqrt(1 + 1.0 / filtered_str.length)
+                else
+                  Math.sqrt(2.0 / filtered_str.length)
+                end
         { ngram: filtered_str[i..i + config[:ngram_width] - 1], score: score }
       end
 
@@ -311,12 +310,12 @@ module Mongoid::FullTextSearch
     # Take a list of filters to be mapped so they can update the query
     # used upon the fulltext search of the ngrams
     def map_query_filters(filters)
-      Hash[filters.map do|key, value|
+      Hash[filters.map do |key, value|
         case value
         when Hash then
           if value.key? :any then format_query_filter('$in', key, value[:any])
           elsif value.key? :all then format_query_filter('$all', key, value[:all])
-          else fail UnknownFilterQueryOperator, value.keys.join(','), caller end
+          else raise UnknownFilterQueryOperator, value.keys.join(','), caller end
         else format_query_filter('$all', key, value)
         end
       end]
@@ -355,7 +354,7 @@ module Mongoid::FullTextSearch
         filter_values = Hash[fulltext_config[:filters].map do |key, value|
           begin
             [key, value.call(self)]
-          rescue
+          rescue StandardError
             # Suppress any exceptions caused by filters
           end
         end.compact]
