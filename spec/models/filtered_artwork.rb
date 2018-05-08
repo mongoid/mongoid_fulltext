@@ -7,6 +7,5 @@ class FilteredArtwork
                              filters: { is_foobar: ->(x) { x.title == 'foobar' },
                                         is_artwork: ->(_x) { true },
                                         is_artist: ->(_x) { false },
-                                        colors?: ->(x) { x.colors }
-                                  }
+                                        colors?: ->(x) { x.colors } }
 end
