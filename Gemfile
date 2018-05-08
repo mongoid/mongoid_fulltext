@@ -24,7 +24,7 @@ group :test do
 end
 
 group :development do
-  gem 'rake', '< 11'
-  gem 'rubocop', '0.34.1'
   gem 'mongoid-danger', '~> 0.1.1'
+  gem 'rake', '< 11'
+  gem 'rubocop', '~> 0.55'
 end

@@ -6,6 +6,5 @@ class FilteredOther
   field :name
   fulltext_search_in :name, index_name: 'mongoid_fulltext.artworks_and_artists',
                             filters: { is_fuzzy: ->(_x) { true },
-                                       is_awesome: ->(_x) { false }
-                                  }
+                                       is_awesome: ->(_x) { false } }
 end

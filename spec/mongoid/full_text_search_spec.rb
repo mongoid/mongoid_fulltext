@@ -1,4 +1,4 @@
-# coding: utf-8
+
 require 'spec_helper'
 
 describe Mongoid::FullTextSearch do
@@ -423,7 +423,7 @@ describe Mongoid::FullTextSearch do
     let!(:somao)        { ExternalArtwork.create(title: 'Somao by Randy Morehall') }
 
     it "returns basic matches that don't match a whole word and aren't prefixes with score < 1" do
-      %w(paox porehall).each do |query|
+      %w[paox porehall].each do |query|
         results = ExternalArtist.fulltext_search(query, return_scores: true)
         expect(results.length).to be > 0
         expect(results.map { |result| result[-1] }.inject(true) { |accum, item| accum &= (item < 1) }).to be_truthy
@@ -431,7 +431,7 @@ describe Mongoid::FullTextSearch do
     end
 
     it 'returns prefix matches with a score >= 1 but < 2' do
-      %w(warho rand).each do |query|
+      %w[warho rand].each do |query|
         results = ExternalArtist.fulltext_search(query, return_scores: true)
         expect(results.length).to be > 0
         expect(results.map { |result| result[-1] if result[0].to_s.starts_with?(query) }.compact.inject(true) { |accum, item| accum &= (item >= 1 && item < 2) }).to be_truthy
@@ -439,7 +439,7 @@ describe Mongoid::FullTextSearch do
     end
 
     it 'returns full-word matches with a score >= 2' do
-      %w(andy warhol mao).each do |query|
+      %w[andy warhol mao].each do |query|
         results = ExternalArtist.fulltext_search(query, return_scores: true)
         expect(results.length).to be > 0
         expect(results.map { |result| result[-1] if result[0].to_s.split(' ').member?(query) }.compact.inject(true) { |accum, item| accum &= (item >= 2) }).to be_truthy
@@ -570,7 +570,7 @@ describe Mongoid::FullTextSearch do
 
       context 'and is not a symbol, string, or proc' do
         before(:each) do
-          conditional_index[:update_if] = %w(this isn't a symbol, string, or proc)
+          conditional_index[:update_if] = %w[this isn't a symbol string or proc]
         end
 
         it "doesn't update the index for the document" do
@@ -617,7 +617,7 @@ describe Mongoid::FullTextSearch do
         # but mongo will automatically attempt to index _id in the background
         expect(Mongoid.default_session['mongoid_fulltext.index_basicartwork_0'].indexes.count).to be <= 1
         BasicArtwork.create_indexes
-        expected_indexes = %w(_id_ fts_index document_id_1).sort
+        expected_indexes = %w[_id_ fts_index document_id_1].sort
         current_indexes = []
         Mongoid.default_session['mongoid_fulltext.index_basicartwork_0'].indexes.each do |idef|
           current_indexes << idef['name']

@@ -7,7 +7,7 @@ require 'database_cleaner'
 
 ENV['MONGOID_ENV'] = 'test'
 
-require File.expand_path('../../lib/mongoid_fulltext', __FILE__)
+require File.expand_path('../lib/mongoid_fulltext', __dir__)
 
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each { |f| require f }
 Dir["#{File.dirname(__FILE__)}/models/**/*.rb"].each { |f| require f }
@@ -21,14 +21,6 @@ Mongo::Logger.logger.level = Logger::INFO if Mongoid::Compatibility::Version.mon
 Mongoid.configure do |config|
   config.connect_to('mongoid_fulltext_test')
 end
-
-Mongoid.logger.level = Logger::INFO
-Mongo::Logger.logger.level = Logger::INFO if Mongoid::Compatibility::Version.mongoid5_or_newer?
-
-DatabaseCleaner.orm = :mongoid
-DatabaseCleaner.strategy = :truncation
-
-::I18n.available_locales = %i(en cs)
 
 RSpec.configure do |c|
   c.before :each do
