@@ -249,6 +249,40 @@ the AND of all of the individual results for each of the fields. Finally, if a f
 but criteria for that filter aren't passed to `fulltext_search`, the result is as if the filter
 had never been defined - you see both models that both pass and fail the filter in the results.
 
+SCI Support
+-----------
+
+The search respects SCI. From the spec:
+
+```ruby
+class MyDoc
+  include Mongoid::Document
+  include Mongoid::FullTextSearch
+
+  field :title
+  fulltext_search_in :title
+end
+
+class MyInheritedDoc < MyDoc
+end
+```
+
+```ruby
+MyDoc.fulltext_search(…) # => will return both MyDoc as well as MyInheritedDoc documents
+MyInheritedDoc.fulltext_search(…) # => will return only MyInheritedDoc documents
+```
+
+Criteria Support
+----------------
+
+It is also possible to pre-empt the search with Monogid criteria:
+
+```ruby
+MyDoc.where(value: 10).fulltext_search(…)
+```
+
+Please note that this will not work in case an index is shared by multiple classes (that are not connected through inheritance), since a criteria applies only to one class.
+
 Indexing Options
 ----------------
 

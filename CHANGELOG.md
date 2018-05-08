@@ -1,5 +1,6 @@
 ### 0.8.3 (Next)
 
+* [#37](https://github.com/mongoid/mongoid_fulltext/pull/37): Sci & criteria support - [@tomasc](https://github.com/tomasc).
 * Your contribution here.
 
 ### 0.8.2 (8/5/2018)

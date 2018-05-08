@@ -1,0 +1,2 @@
+class MyInheritedDoc < MyDoc
+end

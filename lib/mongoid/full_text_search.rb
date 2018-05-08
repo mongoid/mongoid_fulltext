@@ -143,6 +143,7 @@ module Mongoid::FullTextSearch
       coll = collection.database[index_name]
       cursors = ngrams.map do |ngram|
         query = { 'ngram' => ngram[0] }
+        query.update(document_type_filters)
         query.update(map_query_filters(options))
         count = coll.find(query).count
         { ngram: ngram, count: count, query: query }
@@ -191,7 +192,11 @@ module Mongoid::FullTextSearch
     end
 
     def instantiate_mapreduce_result(result)
-      result[:clazz].constantize.find(result[:id])
+      if criteria.selector.empty?
+        result[:clazz].constantize.find(result[:id])
+      else
+        criteria.where(_id: result[:id]).first
+      end
     end
 
     def instantiate_mapreduce_results(results, options)
@@ -294,6 +299,13 @@ module Mongoid::FullTextSearch
     end
 
     private
+
+    # add filter by type according to SCI classes
+    def document_type_filters
+      return {} unless fields['_type'].present?
+      kls = ([self] + descendants).map(&:to_s)
+      { 'class' => { '$in' => kls } }
+    end
 
     # Take a list of filters to be mapped so they can update the query
     # used upon the fulltext search of the ngrams
