@@ -377,7 +377,7 @@ module Mongoid::FullTextSearch
           filter_values = Hash[fulltext_config[:filters].map do |key, value|
             begin
               [key, value.call(self)]
-            rescue
+            rescue StandardError
               # Suppress any exceptions caused by filters
             end
           end.compact]
