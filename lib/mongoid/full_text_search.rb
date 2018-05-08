@@ -70,8 +70,16 @@ module Mongoid::FullTextSearch
     def create_fulltext_indexes
       return unless mongoid_fulltext_config
       mongoid_fulltext_config.each_pair do |index_name, fulltext_config|
-        fulltext_search_ensure_indexes(index_name, fulltext_config)
+        ::I18n.available_locales.each do |locale|
+          fulltext_search_ensure_indexes(localized_index_name(index_name, locale), fulltext_config)
+        end
       end
+    end
+
+    def localized_index_name(index_name, locale)
+      return index_name unless fields.values.any?(&:localized?)
+      return index_name unless ::I18n.available_locales.count > 1
+      "#{index_name}_#{locale}"
     end
 
     def fulltext_search_ensure_indexes(index_name, config)
@@ -131,6 +139,7 @@ module Mongoid::FullTextSearch
       end
       index_name = options.key?(:index) ? options.delete(:index) : mongoid_fulltext_config.keys.first
 
+      loc_index_name = localized_index_name(index_name, ::I18n.locale)
       # Options hash should only contain filters after this point
 
       ngrams = all_ngrams(query_string, mongoid_fulltext_config[index_name])
@@ -140,9 +149,10 @@ module Mongoid::FullTextSearch
       # get a count of the number of index documents containing that n-gram
       ordering = { 'score' => -1 }
       limit = mongoid_fulltext_config[index_name][:max_candidate_set_size]
-      coll = collection.database[index_name]
+      coll = collection.database[loc_index_name]
       cursors = ngrams.map do |ngram|
         query = { 'ngram' => ngram[0] }
+        query.update(document_type_filters)
         query.update(map_query_filters(options))
         count = coll.find(query).count
         { ngram: ngram, count: count, query: query }
@@ -191,7 +201,11 @@ module Mongoid::FullTextSearch
     end
 
     def instantiate_mapreduce_result(result)
-      result[:clazz].constantize.find(result[:id])
+      if criteria.selector.empty?
+        result[:clazz].constantize.find(result[:id])
+      else
+        criteria.where(_id: result[:id]).first
+      end
     end
 
     def instantiate_mapreduce_results(results, options)
@@ -280,11 +294,13 @@ module Mongoid::FullTextSearch
 
     def remove_from_ngram_index
       mongoid_fulltext_config.each_pair do |index_name, _fulltext_config|
-        coll = collection.database[index_name]
-        if Mongoid::Compatibility::Version.mongoid5_or_newer?
-          coll.find('class' => name).delete_many
-        else
-          coll.find('class' => name).remove_all
+        ::I18n.available_locales.each do |locale|
+          coll = collection.database[localized_index_name(index_name, locale)]
+          if Mongoid::Compatibility::Version.mongoid5_or_newer?
+            coll.find('class' => name).delete_many
+          else
+            coll.find('class' => name).remove_all
+          end
         end
       end
     end
@@ -294,6 +310,13 @@ module Mongoid::FullTextSearch
     end
 
     private
+
+    # add filter by type according to SCI classes
+    def document_type_filters
+      return {} unless fields['_type'].present?
+      kls = ([self] + descendants).map(&:to_s)
+      { 'class' => { '$in' => kls } }
+    end
 
     # Take a list of filters to be mapped so they can update the query
     # used upon the fulltext search of the ngrams
@@ -316,45 +339,58 @@ module Mongoid::FullTextSearch
 
   def update_ngram_index
     mongoid_fulltext_config.each_pair do |index_name, fulltext_config|
-      if condition = fulltext_config[:update_if]
-        case condition
-        when Symbol then  next unless send condition
-        when String then  next unless instance_eval condition
-        when Proc then    next unless condition.call self
-        else; next
-        end
-      end
+      ::I18n.available_locales.each do |locale|
+        loc_index_name = self.class.localized_index_name(index_name, locale)
 
-      # remove existing ngrams from external index
-      coll = collection.database[index_name.to_sym]
-      if Mongoid::Compatibility::Version.mongoid5_or_newer?
-        coll.find('document_id' => _id).delete_many
-      else
-        coll.find('document_id' => _id).remove_all
-      end
-      # extract ngrams from fields
-      field_values = fulltext_config[:ngram_fields].map { |field| send(field) }
-      ngrams = field_values.inject({}) { |accum, item| accum.update(self.class.all_ngrams(item, fulltext_config, false)) }
-      return if ngrams.empty?
-      # apply filters, if necessary
-      filter_values = nil
-      if fulltext_config.key?(:filters)
-        filter_values = Hash[fulltext_config[:filters].map do |key, value|
-          begin
-            [key, value.call(self)]
-          rescue StandardError
-            # Suppress any exceptions caused by filters
+        if condition = fulltext_config[:update_if]
+          case condition
+          when Symbol then  next unless send condition
+          when String then  next unless instance_eval condition
+          when Proc then    next unless condition.call self
+          else; next
           end
-        end.compact]
-      end
-      # insert new ngrams in external index
-      ngrams.each_pair do |ngram, score|
-        index_document = { 'ngram' => ngram, 'document_id' => _id, 'score' => score, 'class' => self.class.name }
-        index_document['filter_values'] = filter_values if fulltext_config.key?(:filters)
+        end
+
+        # remove existing ngrams from external index
+        coll = collection.database[loc_index_name.to_sym]
         if Mongoid::Compatibility::Version.mongoid5_or_newer?
-          coll.insert_one(index_document)
+          coll.find('document_id' => _id).delete_many
         else
-          coll.insert(index_document)
+          coll.find('document_id' => _id).remove_all
+        end
+        # extract ngrams from fields
+        field_values = fulltext_config[:ngram_fields].map do |field_name|
+          next send(field_name) if field_name == :to_s
+          next unless field = self.class.fields[field_name.to_s]
+          if field.localized?
+            send("#{field_name}_translations")[locale]
+          else
+            send(field_name)
+          end
+        end
+
+        ngrams = field_values.inject({}) { |accum, item| accum.update(self.class.all_ngrams(item, fulltext_config, false)) }
+        return if ngrams.empty?
+        # apply filters, if necessary
+        filter_values = nil
+        if fulltext_config.key?(:filters)
+          filter_values = Hash[fulltext_config[:filters].map do |key, value|
+            begin
+              [key, value.call(self)]
+            rescue StandardError
+              # Suppress any exceptions caused by filters
+            end
+          end.compact]
+        end
+        # insert new ngrams in external index
+        ngrams.each_pair do |ngram, score|
+          index_document = { 'ngram' => ngram, 'document_id' => _id, 'document_type' => model_name.to_s, 'score' => score, 'class' => self.class.name }
+          index_document['filter_values'] = filter_values if fulltext_config.key?(:filters)
+          if Mongoid::Compatibility::Version.mongoid5_or_newer?
+            coll.insert_one(index_document)
+          else
+            coll.insert(index_document)
+          end
         end
       end
     end
@@ -362,11 +398,13 @@ module Mongoid::FullTextSearch
 
   def remove_from_ngram_index
     mongoid_fulltext_config.each_pair do |index_name, _fulltext_config|
-      coll = collection.database[index_name]
-      if Mongoid::Compatibility::Version.mongoid5_or_newer?
-        coll.find('document_id' => _id).delete_many
-      else
-        coll.find('document_id' => _id).remove_all
+      ::I18n.available_locales.each do |locale|
+        coll = collection.database[self.class.localized_index_name(index_name, locale)]
+        if Mongoid::Compatibility::Version.mongoid5_or_newer?
+          coll.find('document_id' => _id).delete_many
+        else
+          coll.find('document_id' => _id).remove_all
+        end
       end
     end
   end
