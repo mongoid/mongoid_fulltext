@@ -13,7 +13,7 @@ lets you do a fuzzy string search across relatively short strings, which makes i
 Install
 -------
 
-Version 0.6.1 or newer of this gem requires Ruby 1.9.3 or newer and works with Mongoid 3, 4, 5 and 6.
+Version 0.6.1 or newer of this gem requires Ruby 1.9.3 or newer and works with Mongoid 3, 4, 5 and 6, 7.
 Use version 0.5.x for Mongoid 2.4.x and Ruby 1.8.7, 1.9.2 or 1.9.3.
 For Ruby 1.8.7 and/or Mongoid 2.x use [mongoid_fulltext 0.5.x](https://github.com/mongoid/mongoid_fulltext/tree/0.5-stable).
 
@@ -397,4 +397,3 @@ Copyright and License
 MIT License, see [LICENSE](LICENSE) for details.
 
 (c) 2011-2017 [Artsy Inc.](http://artsy.github.io)
-
