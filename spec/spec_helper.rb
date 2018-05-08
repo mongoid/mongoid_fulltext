@@ -22,6 +22,8 @@ Mongoid.configure do |config|
   config.connect_to('mongoid_fulltext_test')
 end
 
+::I18n.available_locales = %i[en cs]
+
 RSpec.configure do |c|
   c.before :each do
     DatabaseCleaner.clean
