@@ -304,7 +304,7 @@ module Mongoid::FullTextSearch
     def document_type_filters
       return {} unless fields['_type'].present?
       kls = ([self] + descendants).map(&:to_s)
-      { 'document_type' => { '$in' => kls } }
+      { 'class' => { '$in' => kls } }
     end
 
     # Take a list of filters to be mapped so they can update the query
@@ -361,7 +361,7 @@ module Mongoid::FullTextSearch
       end
       # insert new ngrams in external index
       ngrams.each_pair do |ngram, score|
-        index_document = { 'ngram' => ngram, 'document_id' => _id, 'document_type' => model_name.to_s, 'score' => score, 'class' => self.class.name }
+        index_document = { 'ngram' => ngram, 'document_id' => _id, 'score' => score, 'class' => self.class.name }
         index_document['filter_values'] = filter_values if fulltext_config.key?(:filters)
         if Mongoid::Compatibility::Version.mongoid5_or_newer?
           coll.insert_one(index_document)
