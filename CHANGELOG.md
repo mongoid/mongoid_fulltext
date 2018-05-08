@@ -1,7 +1,11 @@
-### 0.8.1 (Next)
+### 0.8.3 (Next)
+
+* [#37](https://github.com/mongoid/mongoid_fulltext/pull/37): Sci & criteria support - [@tomasc](https://github.com/tomasc).
+* Your contribution here.
+
+### 0.8.2 (8/5/2018)
 
 * [#35](https://github.com/mongoid/mongoid_fulltext/pull/35): Mongoid 7 compatibility - [@tomasc](https://github.com/tomasc).
-* Your contribution here.
 
 ### 0.8.0 (1/19/2017)
 

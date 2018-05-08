@@ -153,7 +153,7 @@ module Mongoid::FullTextSearch
       cursors = ngrams.map do |ngram|
         query = { 'ngram' => ngram[0] }
         query.update(document_type_filters)
-        query.update(map_query_filters options)
+        query.update(map_query_filters(options))
         count = coll.find(query).count
         { ngram: ngram, count: count, query: query }
       end.sort! { |record1, record2| record1[:count] <=> record2[:count] }
@@ -315,7 +315,7 @@ module Mongoid::FullTextSearch
     def document_type_filters
       return {} unless fields['_type'].present?
       kls = ([self] + descendants).map(&:to_s)
-      { 'document_type' => { '$in' => kls } }
+      { 'class' => { '$in' => kls } }
     end
 
     # Take a list of filters to be mapped so they can update the query
