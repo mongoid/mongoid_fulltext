@@ -51,6 +51,8 @@ Metrics/AbcSize:
 # Configuration parameters: CountComments, ExcludedMethods.
 Metrics/BlockLength:
   Max: 622
+  Exclude:
+    - 'spec/mongoid/full_text_search_spec.rb'
 
 # Offense count: 4
 Metrics/CyclomaticComplexity:
@@ -65,6 +67,9 @@ Metrics/MethodLength:
 # Configuration parameters: CountComments.
 Metrics/ModuleLength:
   Max: 223
+  Exclude:
+    - 'lib/mongoid/full_text_search.rb'
+
 
 # Offense count: 4
 Metrics/PerceivedComplexity:

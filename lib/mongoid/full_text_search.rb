@@ -289,8 +289,10 @@ module Mongoid::FullTextSearch
       end
     end
 
-    def update_ngram_index
-      all.each(&:update_ngram_index)
+    def update_ngram_index(options = { timeout: true })
+      items = all
+      items = items.no_timeout if options.key?(:timeout) && !options[:timeout]
+      items.each(&:update_ngram_index)
     end
 
     private
