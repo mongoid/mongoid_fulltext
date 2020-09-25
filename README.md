@@ -343,6 +343,13 @@ Artwork.update_ngram_index
 Artwork.find(id).update_ngram_index
 ```
 
+If you need to update the index for a large number of documents, using the option below will
+disable your query from timing out:
+
+```ruby
+Artwork.update_ngram_index(timeout: false)
+```
+
 You can remove all or individual instances from the index with the `remove_from_ngram_index`
 method:
 

@@ -634,6 +634,18 @@ describe Mongoid::FullTextSearch do
         BasicArtwork.create_indexes
       end
     end
+
+    context 'using update index options' do
+      it 'will not timeout' do
+        expect(BasicArtwork).to receive_message_chain(:all, :no_timeout).and_return([])
+        BasicArtwork.update_ngram_index(timeout: false)
+      end
+
+      it 'will timeout' do
+        expect(BasicArtwork).to receive_message_chain(:all).and_return([])
+        BasicArtwork.update_ngram_index(timeout: true)
+      end
+    end
   end
 
   context 'batched reindexing' do
