@@ -1,4 +1,6 @@
 AllCops:
+  TargetRubyVersion: 2.1
+  NewCops: disable
   Exclude:
     - vendor/**/*
     - bin/**/*

@@ -1,0 +1,61 @@
+name: Test
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Ruby ${{ matrix.ruby }} / Mongoid ${{ matrix.mongoid }} / MongoDB ${{ matrix.mongodb }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { ruby: '2.1.9', mongoid: '~> 3.0.0', mongodb: '3.6', bundler: '1.17.3' }
+          - { ruby: '2.3.8', mongoid: '~> 3.1.0', mongodb: '3.6', bundler: '2.3.26' }
+          - { ruby: '2.3.8', mongoid: '4', mongodb: '3.6', bundler: '2.3.26' }
+          - { ruby: '2.3.8', mongoid: '5', mongodb: '4.0', bundler: '2.3.26' }
+          - { ruby: '2.5.9', mongoid: '6', mongodb: '4.0', bundler: default }
+          - { ruby: '2.7.8', mongoid: '7', mongodb: '4.4', bundler: '2.4.22' }
+          - { ruby: '3.2', mongoid: '8', mongodb: '6.0', bundler: default }
+          - { ruby: '3.3', mongoid: '9', mongodb: '7.0', bundler: default }
+          - { ruby: '3.4', mongoid: '9', mongodb: '8.0', bundler: default }
+          - { ruby: '4.0', mongoid: '9', mongodb: '8.0', bundler: default }
+    env:
+      MONGOID_VERSION: ${{ matrix.mongoid }}
+      COVERAGE: ${{ matrix.ruby == '4.0' && 'true' || 'false' }}
+    services:
+      mongodb:
+        image: mongo:${{ matrix.mongodb }}
+        ports: ['27017:27017']
+        options: >-
+          --health-cmd "bash -c 'echo > /dev/tcp/127.0.0.1/27017'"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler: ${{ matrix.bundler }}
+          bundler-cache: true
+      - run: bundle exec rake spec
+      - name: Report coverage to Coveralls
+        if: matrix.ruby == '4.0'
+        uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          file: coverage/.resultset.json
+          format: simplecov
+
+  lint:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+      - run: bundle exec rake rubocop
