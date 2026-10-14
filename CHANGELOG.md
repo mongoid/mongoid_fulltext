@@ -1,5 +1,6 @@
 ### 0.8.3 (Next)
 
+* [#50](https://github.com/mongoid/mongoid_fulltext/pull/50): Migrate Danger to danger-pr-comment workflows - [@dblock](https://github.com/dblock).
 * [#45](https://github.com/mongoid/mongoid_fulltext/pull/45): Allow for class level ngram updates to not timeout - [@roykolak](https://github.com/roykolak).
 * Your contribution here.
 
