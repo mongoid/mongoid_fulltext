@@ -75,6 +75,25 @@ module Mongoid::FullTextSearch
       end
     end
 
+    def localized_fulltext_index?(config)
+      config[:ngram_fields].any? do |field_name|
+        field = fields[field_name.to_s]
+        field && field.localized?
+      end
+    end
+
+    def each_fulltext_index
+      mongoid_fulltext_config.each_pair do |index_name, config|
+        if localized_fulltext_index?(config)
+          I18n.available_locales.each do |locale|
+            I18n.with_locale(locale) { yield index_name, config, locale.to_s }
+          end
+        else
+          yield index_name, config, nil
+        end
+      end
+    end
+
     def fulltext_search_ensure_indexes(index_name, config)
       db = collection.database
       coll = db[index_name]
@@ -93,6 +112,7 @@ module Mongoid::FullTextSearch
       end.sort_by { |filter_index| filter_index[0] }
 
       index_definition = [['ngram', 1], ['score', -1]].concat(filter_indexes)
+      index_definition.unshift(['locale', 1]) if localized_fulltext_index?(config)
 
       # Since the definition of the index could have changed, we'll clean up by
       # removing any indexes that aren't on the exact.
@@ -116,6 +136,7 @@ module Mongoid::FullTextSearch
       if all_filter_keys.length > filter_indexes.length
         filter_indexes = all_filter_keys.map { |key| [key, 1] }.sort_by { |filter_index| filter_index[0] }
         index_definition = [['ngram', 1], ['score', -1]].concat(filter_indexes)
+        index_definition.unshift(['locale', 1]) if localized_fulltext_index?(config)
       end
 
       Mongoid.logger.info "Ensuring fts_index on #{coll.name}: #{index_definition}" if Mongoid.logger
@@ -144,9 +165,11 @@ module Mongoid::FullTextSearch
       # get a count of the number of index documents containing that n-gram
       ordering = { 'score' => -1 }
       limit = mongoid_fulltext_config[index_name][:max_candidate_set_size]
+      config = mongoid_fulltext_config[index_name]
       coll = collection.database[index_name]
       cursors = ngrams.map do |ngram|
         query = { 'ngram' => ngram[0] }
+        query['locale'] = I18n.locale.to_s if localized_fulltext_index?(config)
         query.update(map_query_filters(options))
         count = coll.find(query).count
         { ngram: ngram, count: count, query: query }
@@ -323,7 +346,7 @@ module Mongoid::FullTextSearch
   end
 
   def update_ngram_index
-    mongoid_fulltext_config.each_pair do |index_name, fulltext_config|
+    self.class.each_fulltext_index do |index_name, fulltext_config, locale|
       if condition = fulltext_config[:update_if]
         case condition
         when Symbol then  next unless send condition
@@ -335,15 +358,17 @@ module Mongoid::FullTextSearch
 
       # remove existing ngrams from external index
       coll = collection.database[index_name.to_sym]
+      removal_query = { 'document_id' => _id }
+      removal_query['locale'] = locale if locale
       if Mongoid::Compatibility::Version.mongoid5_or_newer?
-        coll.find('document_id' => _id).delete_many
+        coll.find(removal_query).delete_many
       else
-        coll.find('document_id' => _id).remove_all
+        coll.find(removal_query).remove_all
       end
       # extract ngrams from fields
       field_values = fulltext_config[:ngram_fields].map { |field| send(field) }
       ngrams = field_values.inject({}) { |accum, item| accum.update(self.class.all_ngrams(item, fulltext_config, false)) }
-      return if ngrams.empty?
+      next if ngrams.empty?
 
       # apply filters, if necessary
       filter_values = nil
@@ -359,6 +384,7 @@ module Mongoid::FullTextSearch
       # insert new ngrams in external index
       ngrams.each_pair do |ngram, score|
         index_document = { 'ngram' => ngram, 'document_id' => _id, 'score' => score, 'class' => self.class.name }
+        index_document['locale'] = locale if locale
         index_document['filter_values'] = filter_values if fulltext_config.key?(:filters)
         if Mongoid::Compatibility::Version.mongoid5_or_newer?
           coll.insert_one(index_document)
