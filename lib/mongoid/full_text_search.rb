@@ -58,6 +58,7 @@ module Mongoid::FullTextSearch
       config.update(options)
 
       raise ArgumentError, ':alphabet must be a String or Regexp' unless config[:alphabet].is_a?(String) || config[:alphabet].is_a?(Regexp)
+      raise ArgumentError, ':max_ngrams_to_search must be a positive integer' unless config[:max_ngrams_to_search].is_a?(Integer) && config[:max_ngrams_to_search] > 0
 
       args = [:to_s] if args.empty?
       config[:ngram_fields] = args
@@ -258,22 +259,20 @@ module Mongoid::FullTextSearch
         (alphabet.is_a?(Regexp) ? alphabet =~ ch : alphabet[ch]) || config[:word_separators][ch]
       end.join('')
 
-      # Figure out how many ngrams to extract from the string. If we can't afford to extract all ngrams,
-      # step over the string in evenly spaced strides to extract ngrams. For example, to extract 3 3-letter
-      # ngrams from 'abcdefghijk', we'd want to extract 'abc', 'efg', and 'ijk'.
-      step_size = if bound_number_returned
-                    [((filtered_str.length - config[:ngram_width]).to_f / config[:max_ngrams_to_search]).ceil, 1].max
-                  else
-                    1
-                  end
+      # Sample across the full string, including both endpoints when taking multiple ngrams.
+      # Three 3-letter ngrams from 'abcdefghijk' are 'abc', 'efg', and 'ijk'.
+      last_start = filtered_str.length - config[:ngram_width]
+      ngram_count = last_start + 1
+      ngram_count = [ngram_count, config[:max_ngrams_to_search]].min if bound_number_returned
 
       # Create an array of records of the form {:ngram => x, :score => y} for all ngrams that occur in the
-      # input string using the step size that we just computed. Let score(x,y) be the score of string x
+      # input string using the sample positions. Let score(x,y) be the score of string x
       # compared with string y - assigning scores to ngrams with the square root-based scoring function
       # below and multiplying scores of matching ngrams together yields a score function that has the
       # property that score(x,y) > score(x,z) for any string z containing y and score(x,y) > score(x,z)
       # for any string z contained in y.
-      ngram_array = (0..filtered_str.length - config[:ngram_width]).step(step_size).map do |i|
+      ngram_array = (0...ngram_count).map do |sample|
+        i = ngram_count == 1 ? 0 : (sample * last_start.to_f / (ngram_count - 1)).round
         score = if i == 0 || (config[:apply_prefix_scoring_to_all_words] && \
                       config[:word_separators].key?(filtered_str[i - 1].chr))
                   Math.sqrt(1 + 1.0 / filtered_str.length)
