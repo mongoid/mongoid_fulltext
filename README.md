@@ -91,6 +91,29 @@ interpretation that you can use to make decisions about whether the match is goo
   option turned on (it's turned on by default), you can expect a score of at least 2 for the match.
 * If neither of the above criteria are met, you can expect a score less than one.
 
+### Weighted fields
+
+Use `:priorities` to give matches in some fields more influence on relevance:
+
+```ruby
+fulltext_search_in :title, :description, :tags,
+                   :priorities => { :title => 10, :description => 5 },
+                   :score_aggregation => :max
+```
+
+Weights must be positive finite numbers; omitted fields have weight 1. Symbol and string field names are accepted, including computed readers and the default `to_s` field. Unknown fields, duplicate symbol/string keys for the same field, invalid weights, and unsupported aggregation modes raise `ArgumentError` when the index is declared.
+
+`:score_aggregation` determines how a term shared by multiple fields is scored:
+
+* `:max` (the default when `:priorities` is provided) keeps the maximum weighted contribution.
+* `:sum` adds the weighted contributions from different fields.
+
+Within an array field, both modes keep the maximum contribution for each term across the elements before applying the field's weight. Repeated tags do not increase relevance. Repeating the same field in the declaration does not count it twice. Set `:score_aggregation` alone to opt into either mode with weight 1 for every field.
+
+Weights multiply stored document-term scores only; query-term scoring and candidate limits are unchanged. They apply independently to each locale and work with scalar fields, arrays, computed readers, filters, and shared index collections. Models sharing a collection should use comparable weights if their scores should be comparable.
+
+The rough score thresholds above describe unweighted search, not weighted or summed scores. Higher weights or additional matching fields can outweigh a more exact match, and candidate limits still make search approximate. No per-field metadata or additional records are stored.
+
 If you don't specify a field to index, the default is the result of `to_s` called on the object.
 The following definition will index the first and last name of an artist:
 

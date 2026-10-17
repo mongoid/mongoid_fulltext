@@ -1,5 +1,6 @@
 ### 0.9.0 (Next)
 
+* [#61](https://github.com/mongoid/mongoid_fulltext/pull/61): Support weighted fields with configurable maximum or summed field-score aggregation - [@dblock](https://github.com/dblock).
 * [#60](https://github.com/mongoid/mongoid_fulltext/pull/60): Extract ngram calculation and index-definition planning for maintainability without changing model APIs or search behavior - [@tomasc](https://github.com/tomasc), [@dblock](https://github.com/dblock).
 * [#59](https://github.com/mongoid/mongoid_fulltext/pull/59): Document and cover class-level indexing timeout options - [@dblock](https://github.com/dblock).
 * [#52](https://github.com/mongoid/mongoid_fulltext/pull/52): Fix full-text index creation before any documents exist - [@dblock](https://github.com/dblock).

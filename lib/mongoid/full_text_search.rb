@@ -10,6 +10,7 @@ end
 require 'cgi'
 require 'mongoid/full_text_search/ngrams'
 require 'mongoid/full_text_search/index_definition'
+require 'mongoid/full_text_search/field_scores'
 
 module Mongoid::FullTextSearch
   extend ActiveSupport::Concern
@@ -62,6 +63,7 @@ module Mongoid::FullTextSearch
       raise ArgumentError, ':max_ngrams_to_search must be a positive integer' unless config[:max_ngrams_to_search].is_a?(Integer) && config[:max_ngrams_to_search] > 0
 
       args = [:to_s] if args.empty?
+      FieldScores.configure(config, args)
       config[:ngram_fields] = args
       config[:alphabet] = Hash[config[:alphabet].split('').map { |ch| [ch, ch] }] if config[:alphabet].is_a?(String)
       config[:word_separators] = Hash[config[:word_separators].split('').map { |ch| [ch, ch] }]
@@ -292,8 +294,12 @@ module Mongoid::FullTextSearch
         coll.find(removal_query).remove_all
       end
       # extract ngrams from fields
-      field_values = fulltext_config[:ngram_fields].flat_map { |field| send(field) }
-      ngrams = field_values.inject({}) { |accum, item| accum.update(self.class.all_ngrams(item, fulltext_config, false)) }
+      ngrams = if fulltext_config.key?(:priorities)
+                 FieldScores.calculate(fulltext_config) { |field| send(field) }
+               else
+                 field_values = fulltext_config[:ngram_fields].flat_map { |field| send(field) }
+                 field_values.inject({}) { |accum, item| accum.update(self.class.all_ngrams(item, fulltext_config, false)) }
+               end
       next if ngrams.empty?
 
       # apply filters, if necessary
