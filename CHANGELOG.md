@@ -1,5 +1,6 @@
 ### 0.8.3 (Next)
 
+* [#59](https://github.com/mongoid/mongoid_fulltext/pull/59): Document and cover class-level indexing timeout options - [@dblock](https://github.com/dblock).
 * [#51](https://github.com/mongoid/mongoid_fulltext/pull/51): Modernize CI through Ruby 4.0, Mongoid 9, and MongoDB 8 with real coverage, RuboCop 1.92, and fork-safe Danger workflows - [@dblock](https://github.com/dblock).
 * [#45](https://github.com/mongoid/mongoid_fulltext/pull/45): Allow for class level ngram updates to not timeout - [@roykolak](https://github.com/roykolak).
 * Your contribution here.

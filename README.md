@@ -254,6 +254,8 @@ had never been defined - you see both models that both pass and fail the filter 
 Indexing Options
 ----------------
 
+`Artwork.update_ngram_index(timeout: false)` rebuilds the index for all records without a cursor timeout; the `timeout` option belongs to the class method, not the per-document `artwork.update_ngram_index` method.
+
 Additional indexing/query options can be used as parameters to `fulltext_search_in`.
 
 * `alphabet`: letters to index, default is `abcdefghijklmnopqrstuvwxyz0123456789 `.
