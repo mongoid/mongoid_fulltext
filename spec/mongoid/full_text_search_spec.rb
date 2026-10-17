@@ -657,6 +657,20 @@ describe Mongoid::FullTextSearch do
     end
   end
 
+  context 'creating indexes before any documents exist' do
+    it 'creates both indexes in a missing collection without inserting documents' do
+      coll = BasicArtwork.collection.database[BasicArtwork.mongoid_fulltext_config.keys.first]
+      BasicArtwork.create_indexes
+      coll.drop
+      BasicArtwork.create_indexes
+
+      indexes = []
+      coll.indexes.each { |index| indexes << index['name'] }
+      expect(indexes).to include('fts_index', 'document_id_1') if Mongoid::Compatibility::Version.mongoid5_or_newer?
+      expect(coll.find.count).to eq(0)
+    end
+  end
+
   # For =~ operator documentation
   # https://github.com/dchelimsky/rspec/blob/master/lib/spec/matchers/match_array.rb#L53
 
