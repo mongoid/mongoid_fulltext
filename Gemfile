@@ -14,7 +14,7 @@ group :test do
     gem 'database_cleaner', '~> 1.8'
   end
   gem 'rspec'
-  gem 'simplecov', '~> 0.22', require: false if ENV['COVERAGE'] == 'true'
+  gem 'simplecov', RUBY_VERSION < '2.5' ? '~> 0.16.0' : '~> 0.22', require: false if ENV['COVERAGE'] == 'true'
 end
 
 group :development do
