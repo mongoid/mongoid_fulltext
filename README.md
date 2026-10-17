@@ -258,6 +258,10 @@ Indexing Options
 
 `Artwork.create_indexes` can create the full-text collections and their indexes before any artworks have been saved.
 
+Localized Mongoid fields (`field :title, type: String, localize: true`) are indexed for every locale in `I18n.available_locales`. Declare the field normally with `fulltext_search_in :title`; searches use `I18n.locale`, so use `I18n.with_locale(:cs) { Artwork.fulltext_search('obraz') }` to search a particular translation. Field readers, computed methods, `update_if`, and filters run within each locale, honoring Mongoid's configured fallback behavior. This does not search all languages at once.
+
+All translations use the original full-text index collection. Each ngram record for an index that explicitly includes a localized field has a string `locale` value, for example `{ document_id: id, locale: 'cs', ngram: 'obr', score: score, class: 'Artwork' }`. Searches filter by locale, backed by a compound index beginning with `locale`, `ngram`, and `score`. Nonlocalized index records remain unchanged. Models sharing a localized index must all include a localized field in that index and use the same locale configuration. Define available locales before indexing and rebuild after adding a locale. The alphabet must still contain the characters being indexed. Existing localized-field users must follow [UPGRADING](UPGRADING.md) to rebuild locale-tagged records.
+
 Additional indexing/query options can be used as parameters to `fulltext_search_in`.
 
 * `alphabet`: letters to index, default is `abcdefghijklmnopqrstuvwxyz0123456789 `.
