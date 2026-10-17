@@ -1,4 +1,3 @@
-
 require 'spec_helper'
 
 describe Mongoid::FullTextSearch do
@@ -434,7 +433,7 @@ describe Mongoid::FullTextSearch do
       %w[warho rand].each do |query|
         results = ExternalArtist.fulltext_search(query, return_scores: true)
         expect(results.length).to be > 0
-        expect(results.map { |result| result[-1] if result[0].to_s.starts_with?(query) }.compact.inject(true) { |accum, item| accum &= (item >= 1 && item < 2) }).to be_truthy
+        expect(results.map { |result| result[-1] if result[0].to_s.starts_with?(query) }.compact.inject(true) { |accum, item| accum &= item >= 1 && item < 2 }).to be_truthy
       end
     end
 
@@ -491,8 +490,8 @@ describe Mongoid::FullTextSearch do
   end
 
   context 'remove_from_ngram_index' do
-    let!(:flowers1)     { BasicArtwork.create(title: 'Flowers 1') }
-    let!(:flowers2)     { BasicArtwork.create(title: 'Flowers 1') }
+    let!(:flowers1) { BasicArtwork.create(title: 'Flowers 1') }
+    let!(:flowers2) { BasicArtwork.create(title: 'Flowers 1') }
 
     it 'removes all records from the index' do
       BasicArtwork.remove_from_ngram_index
@@ -506,8 +505,8 @@ describe Mongoid::FullTextSearch do
   end
 
   context 'update_ngram_index' do
-    let!(:flowers1)     { BasicArtwork.create(title: 'Flowers 1') }
-    let!(:flowers2)     { BasicArtwork.create(title: 'Flowers 2') }
+    let!(:flowers1) { BasicArtwork.create(title: 'Flowers 1') }
+    let!(:flowers2) { BasicArtwork.create(title: 'Flowers 2') }
 
     context 'when config[:update_if] exists' do
       let(:painting)          { BasicArtwork.new title: 'Painting' }

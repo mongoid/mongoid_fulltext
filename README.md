@@ -2,10 +2,12 @@ Mongoid Fulltext Search
 =======================
 
 [![Gem Version](https://badge.fury.io/rb/mongoid_fulltext.svg)](http://badge.fury.io/rb/mongoid_fulltext)
-[![Build Status](https://secure.travis-ci.org/mongoid/mongoid_fulltext.svg)](http://travis-ci.org/mongoid/mongoid_fulltext)
-[![Code Climate](https://codeclimate.com/github/mongoid/mongoid_fulltext/badges/gpa.svg)](https://codeclimate.com/github/mongoid/mongoid_fulltext)
+[![Test](https://github.com/mongoid/mongoid_fulltext/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/mongoid/mongoid_fulltext/actions/workflows/test.yml?query=branch%3Amaster)
+[![Coverage Status](https://coveralls.io/repos/github/mongoid/mongoid_fulltext/badge.svg?branch=master)](https://coveralls.io/github/mongoid/mongoid_fulltext?branch=master)
 
 Full-text search using n-gram matching for the Mongoid ODM.
+
+CI reports real SimpleCov coverage from the Ruby 4.0 job to Coveralls. Run `COVERAGE=true bundle install` and `COVERAGE=true bundle exec rake spec` to collect coverage locally. Danger runs with the isolated `Gemfile.danger`; PR checks have read-only permissions and a separate workflow publishes the report as a comment.
 
 MongoDB introduced full-text search capabilities in v2.4, so this gem is a good fit for cases where you want something a little less than a full-blown indexing service. The mongoid_fulltext gem
 lets you do a fuzzy string search across relatively short strings, which makes it good for populating autocomplete boxes based on the display names of your Rails models but not appropriate for, say, indexing hundreds of thousands of HTML documents.
@@ -13,7 +15,7 @@ lets you do a fuzzy string search across relatively short strings, which makes i
 Install
 -------
 
-Version 0.6.1 or newer of this gem requires Ruby 1.9.3 or newer and works with Mongoid 3, 4, 5 and 6, 7.
+The current CI matrix exercises representative Ruby/Mongoid/MongoDB combinations from Ruby 2.1 and Mongoid 3 through Ruby 4.0, Mongoid 9, and MongoDB 8.0.
 Use version 0.5.x for Mongoid 2.4.x and Ruby 1.8.7, 1.9.2 or 1.9.3.
 For Ruby 1.8.7 and/or Mongoid 2.x use [mongoid_fulltext 0.5.x](https://github.com/mongoid/mongoid_fulltext/tree/0.5-stable).
 

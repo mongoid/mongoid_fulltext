@@ -1,4 +1,3 @@
-
 class RussianArtwork
   include Mongoid::Document
   include Mongoid::FullTextSearch

@@ -69,6 +69,7 @@ module Mongoid::FullTextSearch
 
     def create_fulltext_indexes
       return unless mongoid_fulltext_config
+
       mongoid_fulltext_config.each_pair do |index_name, fulltext_config|
         fulltext_search_ensure_indexes(index_name, fulltext_config)
       end
@@ -92,8 +93,10 @@ module Mongoid::FullTextSearch
       coll.indexes.each do |idef|
         keys = idef['key'].keys
         next unless keys.member?('ngram')
+
         all_filter_keys |= keys.find_all { |key| key.starts_with?('filter_values.') }
         next unless keys & correct_keys != correct_keys
+
         Mongoid.logger.info "Dropping #{idef['name']} [#{keys & correct_keys} <=> #{correct_keys}]" if Mongoid.logger
         if Mongoid::Compatibility::Version.mongoid5_or_newer?
           coll.indexes.drop_one(idef['key'])
@@ -156,6 +159,7 @@ module Mongoid::FullTextSearch
       results_so_far = 0
       candidates_list = cursors.map do |doc|
         next if doc[:count] == 0
+
         query_result = coll.find(doc[:query])
         if results_so_far >= limit
           query_result = query_result.sort(ordering).limit(max_results)
@@ -255,6 +259,7 @@ module Mongoid::FullTextSearch
         prefixes_seen = {}
         all_words.each do |word|
           next if word.length < config[:ngram_width] - 1
+
           prefix = word[0...config[:ngram_width] - 1]
           if prefixes_seen[prefix].nil? && (config[:stop_words][word].nil? || word == filtered_str)
             ngram_array << { ngram: prefix, score: 1 + 1.0 / filtered_str.length }
@@ -302,7 +307,7 @@ module Mongoid::FullTextSearch
     def map_query_filters(filters)
       Hash[filters.map do |key, value|
         case value
-        when Hash then
+        when Hash
           if value.key? :any then format_query_filter('$in', key, value[:any])
           elsif value.key? :all then format_query_filter('$all', key, value[:all])
           else raise UnknownFilterQueryOperator, value.keys.join(','), caller end
@@ -338,6 +343,7 @@ module Mongoid::FullTextSearch
       field_values = fulltext_config[:ngram_fields].map { |field| send(field) }
       ngrams = field_values.inject({}) { |accum, item| accum.update(self.class.all_ngrams(item, fulltext_config, false)) }
       return if ngrams.empty?
+
       # apply filters, if necessary
       filter_values = nil
       if fulltext_config.key?(:filters)

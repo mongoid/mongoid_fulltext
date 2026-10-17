@@ -45,3 +45,4 @@ tmtags
 *.swp
 
 Gemfile.lock
+Gemfile.danger.lock
