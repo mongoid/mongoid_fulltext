@@ -67,6 +67,8 @@ class Artist
 end
 ```
 
+Array fields containing strings are supported alongside scalar fields, for example `fulltext_search_in :title, :tags` with `field :tags, type: Array`. Each array element is indexed independently, so ngrams do not span tags. Nil and empty elements are ignored; changing or clearing the array replaces its old index entries.
+
 To restrict the number of results returned, pass the `:max_results` parameter to `fulltext_search`:
 
 ``` ruby

@@ -6,6 +6,7 @@
 * [#57](https://github.com/mongoid/mongoid_fulltext/pull/57): Respect criteria and single-collection inheritance, skip dangling references, and apply result limits after filtering - [@tomasc](https://github.com/tomasc), [@dblock](https://github.com/dblock).
 * [#56](https://github.com/mongoid/mongoid_fulltext/pull/56): Support Unicode-aware regular expressions for alphabets without enumerating characters - [@dblock](https://github.com/dblock).
 * [#54](https://github.com/mongoid/mongoid_fulltext/pull/54): Insert ngrams in a batch per document index and continue past empty indexes - [@dblock](https://github.com/dblock).
+* [#53](https://github.com/mongoid/mongoid_fulltext/pull/53): Support indexing array fields containing strings - [@dblock](https://github.com/dblock).
 * [#51](https://github.com/mongoid/mongoid_fulltext/pull/51): Modernize CI through Ruby 4.0, Mongoid 9, and MongoDB 8 with real coverage, RuboCop 1.92, and fork-safe Danger workflows - [@dblock](https://github.com/dblock).
 * [#45](https://github.com/mongoid/mongoid_fulltext/pull/45): Allow for class level ngram updates to not timeout - [@roykolak](https://github.com/roykolak).
 * Your contribution here.

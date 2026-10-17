@@ -386,7 +386,7 @@ module Mongoid::FullTextSearch
         coll.find(removal_query).remove_all
       end
       # extract ngrams from fields
-      field_values = fulltext_config[:ngram_fields].map { |field| send(field) }
+      field_values = fulltext_config[:ngram_fields].flat_map { |field| send(field) }
       ngrams = field_values.inject({}) { |accum, item| accum.update(self.class.all_ngrams(item, fulltext_config, false)) }
       next if ngrams.empty?
 
