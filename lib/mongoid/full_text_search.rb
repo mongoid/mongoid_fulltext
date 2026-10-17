@@ -57,9 +57,11 @@ module Mongoid::FullTextSearch
 
       config.update(options)
 
+      raise ArgumentError, ':alphabet must be a String or Regexp' unless config[:alphabet].is_a?(String) || config[:alphabet].is_a?(Regexp)
+
       args = [:to_s] if args.empty?
       config[:ngram_fields] = args
-      config[:alphabet] = Hash[config[:alphabet].split('').map { |ch| [ch, ch] }]
+      config[:alphabet] = Hash[config[:alphabet].split('').map { |ch| [ch, ch] }] if config[:alphabet].is_a?(String)
       config[:word_separators] = Hash[config[:word_separators].split('').map { |ch| [ch, ch] }]
       mongoid_fulltext_config[index_name] = config
 
@@ -251,7 +253,10 @@ module Mongoid::FullTextSearch
       end
 
       # Remove any characters that aren't in the alphabet and aren't word separators
-      filtered_str = str.mb_chars.downcase.to_s.split('').find_all { |ch| config[:alphabet][ch] || config[:word_separators][ch] }.join('')
+      alphabet = config[:alphabet]
+      filtered_str = str.mb_chars.downcase.to_s.split('').find_all do |ch|
+        (alphabet.is_a?(Regexp) ? alphabet =~ ch : alphabet[ch]) || config[:word_separators][ch]
+      end.join('')
 
       # Figure out how many ngrams to extract from the string. If we can't afford to extract all ngrams,
       # step over the string in evenly spaced strides to extract ngrams. For example, to extract 3 3-letter
