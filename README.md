@@ -300,7 +300,7 @@ Additional indexing/query options can be used as parameters to `fulltext_search_
 * `stop_words`: a hash of words to avoid indexing as full words. Used only if `index_full_words`
   is set to `true`. Defaults to a hash containing a list of common English stop words.
 * `apply_prefix_scoring_to_all_words`: score n-grams at beginning of words higher, default is `true`.
-* `max_ngrams_to_search`: maximum number of ngrams to query at any given time, default is `6`.
+* `max_ngrams_to_search`: positive integer limiting sampled sliding-window ngrams, default is `6`. Samples span the query including the first and last windows when at least two are selected; a limit of one selects the first window. Full-word and short-prefix bonuses are added separately and may increase the total number of queried terms.
 * `max_candidate_set_size`: maximum number of candidate ngrams to examine for a given query.
   Defaults to 1000. If you're seeing poor results, you can try increasing this value to consider
   more ngrams per query (changing this parameter does not require a re-index.) The amount of time
