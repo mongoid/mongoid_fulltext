@@ -7,6 +7,11 @@ describe 'Bounded ngram sampling' do
     )
   end
 
+  it 'preserves the model calculation entry point and its unbounded option' do
+    expect(Mongoid::FullTextSearch::Ngrams).to receive(:calculate).with('abcdef', config, false).and_call_original
+    expect(BasicArtwork.all_ngrams('abcdef', config, false).keys).to eq(%w[abc bcd cde def])
+  end
+
   it 'selects the documented evenly spaced sample including the last ngram' do
     expect(BasicArtwork.all_ngrams('abcdefghijk', config).keys).to eq(%w[abc efg ijk])
     expect(BasicArtwork.all_ngrams('abcdefghij', config).keys).to eq(%w[abc efg hij])
