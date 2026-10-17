@@ -7,8 +7,9 @@ else
   require 'mongoid/full_text_search/indexable'
 end
 
-require 'unicode_utils'
 require 'cgi'
+require 'mongoid/full_text_search/ngrams'
+require 'mongoid/full_text_search/index_definition'
 
 module Mongoid::FullTextSearch
   extend ActiveSupport::Concern
@@ -109,26 +110,11 @@ module Mongoid::FullTextSearch
         coll.indexes.create('document_id' => 1)
       end
 
-      # The order of filters matters when the same index is used from two or more collections.
-      filter_indexes = (config[:filters] || []).map do |key, _value|
-        ["filter_values.#{key}", 1]
-      end.sort_by { |filter_index| filter_index[0] }
-
-      index_definition = [['ngram', 1], ['score', -1]].concat(filter_indexes)
-      index_definition.unshift(['locale', 1]) if localized_fulltext_index?(config)
-
-      # Since the definition of the index could have changed, we'll clean up by
-      # removing any indexes that aren't on the exact.
-      correct_keys = index_definition.map { |field_def| field_def[0] }
-      all_filter_keys = filter_indexes.map { |field_def| field_def[0] }
-      coll.indexes.each do |idef|
-        keys = idef['key'].keys
-        next unless keys.member?('ngram')
-
-        all_filter_keys |= keys.find_all { |key| key.starts_with?('filter_values.') }
-        next unless keys & correct_keys != correct_keys
-
-        Mongoid.logger.info "Dropping #{idef['name']} [#{keys & correct_keys} <=> #{correct_keys}]" if Mongoid.logger
+      existing_indexes = []
+      coll.indexes.each { |index| existing_indexes << index }
+      definition = IndexDefinition.new(config[:filters], localized_fulltext_index?(config), existing_indexes)
+      definition.obsolete_indexes.each do |idef|
+        Mongoid.logger.info "Dropping #{idef['name']} [#{idef['key'].keys} <=> #{definition.keys.map(&:first)}]" if Mongoid.logger
         if Mongoid::Compatibility::Version.mongoid5_or_newer?
           coll.indexes.drop_one(idef['key'])
         else
@@ -136,12 +122,7 @@ module Mongoid::FullTextSearch
         end
       end
 
-      if all_filter_keys.length > filter_indexes.length
-        filter_indexes = all_filter_keys.map { |key| [key, 1] }.sort_by { |filter_index| filter_index[0] }
-        index_definition = [['ngram', 1], ['score', -1]].concat(filter_indexes)
-        index_definition.unshift(['locale', 1]) if localized_fulltext_index?(config)
-      end
-
+      index_definition = definition.keys
       Mongoid.logger.info "Ensuring fts_index on #{coll.name}: #{index_definition}" if Mongoid.logger
       if Mongoid::Compatibility::Version.mongoid5_or_newer?
         coll.indexes.create_one(Hash[index_definition], name: 'fts_index')
@@ -243,81 +224,7 @@ module Mongoid::FullTextSearch
     end
 
     def all_ngrams(str, config, bound_number_returned = true)
-      return {} if str.nil?
-
-      if config[:remove_accents]
-        if defined?(UnicodeUtils)
-          str = UnicodeUtils.nfkd(str)
-        elsif defined?(DiacriticsFu)
-          str = DiacriticsFu.escape(str)
-        end
-      end
-
-      # Remove any characters that aren't in the alphabet and aren't word separators
-      alphabet = config[:alphabet]
-      filtered_str = str.mb_chars.downcase.to_s.split('').find_all do |ch|
-        (alphabet.is_a?(Regexp) ? alphabet =~ ch : alphabet[ch]) || config[:word_separators][ch]
-      end.join('')
-
-      # Sample across the full string, including both endpoints when taking multiple ngrams.
-      # Three 3-letter ngrams from 'abcdefghijk' are 'abc', 'efg', and 'ijk'.
-      last_start = filtered_str.length - config[:ngram_width]
-      ngram_count = last_start + 1
-      ngram_count = [ngram_count, config[:max_ngrams_to_search]].min if bound_number_returned
-
-      # Create an array of records of the form {:ngram => x, :score => y} for all ngrams that occur in the
-      # input string using the sample positions. Let score(x,y) be the score of string x
-      # compared with string y - assigning scores to ngrams with the square root-based scoring function
-      # below and multiplying scores of matching ngrams together yields a score function that has the
-      # property that score(x,y) > score(x,z) for any string z containing y and score(x,y) > score(x,z)
-      # for any string z contained in y.
-      ngram_array = (0...ngram_count).map do |sample|
-        i = ngram_count == 1 ? 0 : (sample * last_start.to_f / (ngram_count - 1)).round
-        score = if i == 0 || (config[:apply_prefix_scoring_to_all_words] && \
-                      config[:word_separators].key?(filtered_str[i - 1].chr))
-                  Math.sqrt(1 + 1.0 / filtered_str.length)
-                else
-                  Math.sqrt(2.0 / filtered_str.length)
-                end
-        { ngram: filtered_str[i..i + config[:ngram_width] - 1], score: score }
-      end
-
-      # If an ngram appears multiple times in the query string, keep the max score
-      ngram_array = ngram_array.group_by { |h| h[:ngram] }.map { |key, values| { ngram: key, score: values.map { |v| v[:score] }.max } }
-
-      if config[:index_short_prefixes] || config[:index_full_words]
-        split_regex_def = config[:word_separators].keys.map { |k| Regexp.escape(k) }.join
-        split_regex = Regexp.compile("[#{split_regex_def}]")
-        all_words = filtered_str.split(split_regex)
-      end
-
-      # Add 'short prefix' records to the array: prefixes of the string that are length (ngram_width - 1)
-      if config[:index_short_prefixes]
-        prefixes_seen = {}
-        all_words.each do |word|
-          next if word.length < config[:ngram_width] - 1
-
-          prefix = word[0...config[:ngram_width] - 1]
-          if prefixes_seen[prefix].nil? && (config[:stop_words][word].nil? || word == filtered_str)
-            ngram_array << { ngram: prefix, score: 1 + 1.0 / filtered_str.length }
-            prefixes_seen[prefix] = true
-          end
-        end
-      end
-
-      # Add records to the array of ngrams for each full word in the string that isn't a stop word
-      if config[:index_full_words]
-        full_words_seen = {}
-        all_words.each do |word|
-          if word.length > 1 && full_words_seen[word].nil? && (config[:stop_words][word].nil? || word == filtered_str)
-            ngram_array << { ngram: word, score: 1 + 1.0 / filtered_str.length }
-            full_words_seen[word] = true
-          end
-        end
-      end
-
-      # If an ngram appears as any combination of full word, short prefix, and ngram, keep the sum of the two scores
-      Hash[ngram_array.group_by { |h| h[:ngram] }.map { |key, values| [key, values.map { |v| v[:score] }.sum] }]
+      Ngrams.calculate(str, config, bound_number_returned)
     end
 
     def remove_from_ngram_index
