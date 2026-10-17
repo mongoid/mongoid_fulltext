@@ -266,9 +266,28 @@ Searches can be prefixed with Mongoid criteria, for example `Artwork.where(publi
 
 Single-collection inheritance is respected: a root-class search includes its descendants, while a subclass search excludes its parent and siblings. An unscoped search of an index shared by unrelated models still returns all those models. Adding criteria restricts the results to the calling model and its descendants. Existing index records already contain the class name, so no reindex is required.
 
+The default `alphabet` only includes ASCII letters, digits, and spaces. Use a Unicode-aware regular expression to support whole scripts without enumerating their characters. For example, `/\p{Han}/` accepts Han characters, including those used in Chinese:
+
+```ruby
+class ChineseArtwork
+  include Mongoid::Document
+  include Mongoid::FullTextSearch
+
+  field :title, type: String
+  fulltext_search_in :title, alphabet: /\p{Han}/, ngram_width: 2
+end
+
+artwork = ChineseArtwork.create!(title: "\u5367\u864e\u85cf\u9f99")
+ChineseArtwork.fulltext_search("\u85cf\u9f99") # => [artwork]
+```
+
+For multilingual text, use `alphabet: /[\p{L}\p{M}\p{N}]/` to accept Unicode letters, combining marks, and numbers, or `/[\p{Latin}\p{Cyrillic}]/` to restrict letters to those scripts. Existing string allowlists remain supported and the ASCII default is unchanged.
+
+The expression is tested against each character after accent normalization and lowercasing, not against whole words. Configured word separators are retained independently of the alphabet; other unmatched characters are discarded. `remove_accents: false` preserves combining marks and accents when needed. This is character-ngram matching, not language-aware word segmentation. A shorter `ngram_width` helps with short search terms. Changing the alphabet or ngram width requires rebuilding existing indexes with `ChineseArtwork.update_ngram_index`. Configuring the alphabet is separate from indexing Mongoid localized fields.
+
 Additional indexing/query options can be used as parameters to `fulltext_search_in`.
 
-* `alphabet`: letters to index, default is `abcdefghijklmnopqrstuvwxyz0123456789 `.
+* `alphabet`: a string allowlist or a regular expression matched against each character, default is `abcdefghijklmnopqrstuvwxyz0123456789 `.
 * `word_separators`: word separators, default is the space character.
 * `ngram_width`: ngram width, default is `3`.
 * `index_full_words`: index full words, which improves exact matches, default is `true`.
@@ -293,7 +312,7 @@ Additional indexing/query options can be used as parameters to `fulltext_search_
     * When set to any other type of object, the document's index will not be updated.
 * `reindex_immediately`: whether models will be reindexed automatically upon saves or updates. Defaults to true. When set to false, the class-level `update_ngram_index` method can be called to perform reindexing.
 
-If you work with Cyrillic texts, use this option: `:alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789абвгдежзиклмнопрстуфхцчшщъыьэюя'`.
+For Cyrillic and Latin text with numbers, use `alphabet: /[\p{Latin}\p{Cyrillic}\p{N}]/`.
 
 Array filters
 -------------
