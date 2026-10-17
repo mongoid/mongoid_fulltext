@@ -402,15 +402,16 @@ module Mongoid::FullTextSearch
         end.compact]
       end
       # insert new ngrams in external index
-      ngrams.each_pair do |ngram, score|
+      index_documents = ngrams.map do |ngram, score|
         index_document = { 'ngram' => ngram, 'document_id' => _id, 'score' => score, 'class' => self.class.name }
         index_document['locale'] = locale if locale
         index_document['filter_values'] = filter_values if fulltext_config.key?(:filters)
-        if Mongoid::Compatibility::Version.mongoid5_or_newer?
-          coll.insert_one(index_document)
-        else
-          coll.insert(index_document)
-        end
+        index_document
+      end
+      if Mongoid::Compatibility::Version.mongoid5_or_newer?
+        coll.insert_many(index_documents)
+      else
+        coll.insert(index_documents)
       end
     end
   end
