@@ -3,6 +3,7 @@
 * [#59](https://github.com/mongoid/mongoid_fulltext/pull/59): Document and cover class-level indexing timeout options - [@dblock](https://github.com/dblock).
 * [#52](https://github.com/mongoid/mongoid_fulltext/pull/52): Fix full-text index creation before any documents exist - [@dblock](https://github.com/dblock).
 * [#58](https://github.com/mongoid/mongoid_fulltext/pull/58): Support localized fields with locale-tagged ngrams in one index collection; existing localized indexes must be rebuilt - [@tomasc](https://github.com/tomasc), [@dblock](https://github.com/dblock).
+* [#57](https://github.com/mongoid/mongoid_fulltext/pull/57): Respect criteria and single-collection inheritance, skip dangling references, and apply result limits after filtering - [@tomasc](https://github.com/tomasc), [@dblock](https://github.com/dblock).
 * [#51](https://github.com/mongoid/mongoid_fulltext/pull/51): Modernize CI through Ruby 4.0, Mongoid 9, and MongoDB 8 with real coverage, RuboCop 1.92, and fork-safe Danger workflows - [@dblock](https://github.com/dblock).
 * [#45](https://github.com/mongoid/mongoid_fulltext/pull/45): Allow for class level ngram updates to not timeout - [@roykolak](https://github.com/roykolak).
 * Your contribution here.
