@@ -170,6 +170,7 @@ module Mongoid::FullTextSearch
       cursors = ngrams.map do |ngram|
         query = { 'ngram' => ngram[0] }
         query['locale'] = I18n.locale.to_s if localized_fulltext_index?(config)
+        query.update(document_type_filters)
         query.update(map_query_filters(options))
         count = coll.find(query).count
         { ngram: ngram, count: count, query: query }
@@ -215,18 +216,26 @@ module Mongoid::FullTextSearch
         all_scores.concat(scores)
       end
       all_scores.sort! { |document1, document2| -document1[:score] <=> -document2[:score] }
-      instantiate_mapreduce_results(all_scores[0..max_results - 1], return_scores: return_scores)
+      if max_results > 0
+        instantiate_mapreduce_results(all_scores, return_scores: return_scores, max_results: max_results)
+      else
+        instantiate_mapreduce_results(all_scores[0..max_results - 1], return_scores: return_scores)
+      end
     end
 
     def instantiate_mapreduce_result(result)
-      result[:clazz].constantize.find(result[:id])
+      scope = criteria
+      scope = result[:clazz].constantize.criteria if scope.selector.empty?
+      scope.where(_id: result[:id]).first
     end
 
     def instantiate_mapreduce_results(results, options)
-      if options[:return_scores]
-        results.map { |result| [instantiate_mapreduce_result(result), result[:score]] }.find_all { |result| !result[0].nil? }
-      else
-        results.map { |result| instantiate_mapreduce_result(result) }.compact
+      results.each_with_object([]) do |result, documents|
+        document = instantiate_mapreduce_result(result)
+        next unless document
+
+        documents << (options[:return_scores] ? [document, result[:score]] : document)
+        break documents if options[:max_results] && documents.length >= options[:max_results]
       end
     end
 
@@ -325,6 +334,12 @@ module Mongoid::FullTextSearch
     end
 
     private
+
+    def document_type_filters
+      return {} if criteria.selector.empty? && descendants.empty? && !superclass.respond_to?(:mongoid_fulltext_config)
+
+      { 'class' => { '$in' => ([self] + descendants).map(&:name) } }
+    end
 
     # Take a list of filters to be mapped so they can update the query
     # used upon the fulltext search of the ngrams

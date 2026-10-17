@@ -262,6 +262,10 @@ Localized Mongoid fields (`field :title, type: String, localize: true`) are inde
 
 All translations use the original full-text index collection. Each ngram record for an index that explicitly includes a localized field has a string `locale` value, for example `{ document_id: id, locale: 'cs', ngram: 'obr', score: score, class: 'Artwork' }`. Searches filter by locale, backed by a compound index beginning with `locale`, `ngram`, and `score`. Nonlocalized index records remain unchanged. Models sharing a localized index must all include a localized field in that index and use the same locale configuration. Define available locales before indexing and rebuild after adding a locale. The alphabet must still contain the characters being indexed. Existing localized-field users must follow [UPGRADING](UPGRADING.md) to rebuild locale-tagged records.
 
+Searches can be prefixed with Mongoid criteria, for example `Artwork.where(published: true).fulltext_search('flowers', max_results: 5)`. The result remains an array in relevance order, not a chainable criteria; ordering and pagination on the preceding criteria are not a substitute for sorting or paginating that array. Excluded or deleted documents are skipped before applying `max_results`, within the existing candidate-set bound.
+
+Single-collection inheritance is respected: a root-class search includes its descendants, while a subclass search excludes its parent and siblings. An unscoped search of an index shared by unrelated models still returns all those models. Adding criteria restricts the results to the calling model and its descendants. Existing index records already contain the class name, so no reindex is required.
+
 Additional indexing/query options can be used as parameters to `fulltext_search_in`.
 
 * `alphabet`: letters to index, default is `abcdefghijklmnopqrstuvwxyz0123456789 `.
