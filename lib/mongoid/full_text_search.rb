@@ -79,6 +79,14 @@ module Mongoid::FullTextSearch
       db = collection.database
       coll = db[index_name]
 
+      # Creating an index also creates the collection before older drivers list its indexes.
+      Mongoid.logger.info "Ensuring document_id index on #{coll.name}" if Mongoid.logger
+      if Mongoid::Compatibility::Version.mongoid5_or_newer?
+        coll.indexes.create_one('document_id' => 1)
+      else
+        coll.indexes.create('document_id' => 1)
+      end
+
       # The order of filters matters when the same index is used from two or more collections.
       filter_indexes = (config[:filters] || []).map do |key, _value|
         ["filter_values.#{key}", 1]
@@ -115,13 +123,6 @@ module Mongoid::FullTextSearch
         coll.indexes.create_one(Hash[index_definition], name: 'fts_index')
       else
         coll.indexes.create(Hash[index_definition], name: 'fts_index')
-      end
-
-      Mongoid.logger.info "Ensuring document_id index on #{coll.name}" if Mongoid.logger
-      if Mongoid::Compatibility::Version.mongoid5_or_newer?
-        coll.indexes.create_one('document_id' => 1) # to make removes fast
-      else
-        coll.indexes.create('document_id' => 1) # to make removes fast
       end
     end
 
