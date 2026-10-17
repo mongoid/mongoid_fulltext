@@ -114,6 +114,55 @@ Weights multiply stored document-term scores only; query-term scoring and candid
 
 The rough score thresholds above describe unweighted search, not weighted or summed scores. Higher weights or additional matching fields can outweigh a more exact match, and candidate limits still make search approximate. No per-field metadata or additional records are stored.
 
+### Highlighting
+
+Search and get complete highlighted field values, without storing positional metadata or rebuilding indexes:
+
+```ruby
+Artwork.fulltext_search_with_highlights('ghost', fields: [:title]).each do |result|
+  result.document          # the original artwork
+  result.score             # its search score
+  result.highlights[:title] # "A <b>ghost</b> story"
+end
+```
+
+`fulltext_search_with_highlights` returns an array of results exposing `document`, `score`, and `highlights`. Search ordering, criteria, filters and `max_results` work as in `fulltext_search`, whose return values are unchanged. `fields` selects indexed fields to display; by default all fields in the selected index are included. Unknown fields raise `ArgumentError`. Pass `index: 'index_name'` for models with multiple indexes.
+
+`highlights` is a hash keyed by field name. Scalar values become complete HTML-escaped strings with `<b>` and `</b>` around matches; array values become arrays preserving their order and nil elements. Unmatched values are escaped and returned unchanged otherwise, so a title is still available when another field matched. Nil scalar values remain nil. Text is never truncated or split into snippets. Documents are not modified. Computed readers and the default `to_s` are supported. Localized fields use the current `I18n.locale` and Mongoid's configured fallbacks.
+
+Pass a block to render each merged match with custom markup:
+
+```ruby
+Artwork.fulltext_search_with_highlights('ghost', fields: [:title]) { |match| "<mark>#{match}</mark>" }
+```
+
+The callback receives the HTML-escaped original match and must return a string. Overlapping and adjacent matches are merged before rendering. Surrounding text is escaped automatically. Returned markup is inserted verbatim, so use trusted markup and escape any additional untrusted content you introduce. Output is for HTML element content, not attributes, scripts or URLs. The same callback is supported by `Highlighter.highlight`:
+
+```ruby
+Mongoid::FullTextSearch::Highlighter.highlight(text, query, config) { |match| "<mark>#{match}</mark>" }
+```
+
+For an already-loaded document, `artwork.fulltext_highlights('ghost', fields: [:title])` returns the field hash directly, without searching.
+
+The independent module can also be loaded without Mongoid or a database:
+
+```ruby
+require 'mongoid/full_text_search/highlighter'
+
+config = {
+  alphabet: /[a-z]/, word_separators: { ' ' => true },
+  ngram_width: 3, max_ngrams_to_search: 6, remove_accents: true,
+  apply_prefix_scoring_to_all_words: true, index_full_words: true,
+  index_short_prefixes: false, stop_words: {}
+}
+Mongoid::FullTextSearch::Highlighter.highlight('A ghost story', 'ghost', config)
+# => 'A <b>ghost</b> story'
+```
+
+When using the module with a model, pass that index's compiled configuration, such as `Artwork.mongoid_fulltext_config.fetch(index_name)`. It uses the same bounded query ngrams and normalization as search and considers only terms that would be indexed from that text. Accents, decomposed characters, and discarded punctuation map back to the original text rather than normalized display text.
+
+Highlighting scans only the text you pass to it; it does not consult the database, change search return types, or explain which occurrence contributed to a stored score. A stale index can return a document with no current highlight. Partial ngram matches can produce partial-word highlights, and query sampling can leave portions unmarked. Keep application authorization and field-display policy separate; avoid highlighting internal or sensitive fields merely because they are indexed. For individual public fields, call the module directly.
+
 If you don't specify a field to index, the default is the result of `to_s` called on the object.
 The following definition will index the first and last name of an artist:
 

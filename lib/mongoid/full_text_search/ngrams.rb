@@ -31,6 +31,10 @@ module Mongoid
         Hash[ngram_array.group_by { |h| h[:ngram] }.map { |key, values| [key, values.map { |v| v[:score] }.sum] }]
       end
 
+      def normalized_text(str, config)
+        normalize(str, config)
+      end
+
       def normalize(str, config)
         if config[:remove_accents]
           if defined?(UnicodeUtils)
