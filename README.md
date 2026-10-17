@@ -285,6 +285,8 @@ For multilingual text, use `alphabet: /[\p{L}\p{M}\p{N}]/` to accept Unicode let
 
 The expression is tested against each character after accent normalization and lowercasing, not against whole words. Configured word separators are retained independently of the alphabet; other unmatched characters are discarded. `remove_accents: false` preserves combining marks and accents when needed. This is character-ngram matching, not language-aware word segmentation. A shorter `ngram_width` helps with short search terms. Changing the alphabet or ngram width requires rebuilding existing indexes with `ChineseArtwork.update_ngram_index`. Configuring the alphabet is separate from indexing Mongoid localized fields.
 
+Each document update submits its ngrams as a single bulk insert per nonempty full-text index and locale. The MongoDB driver may split very large batches to meet server limits. Empty indexes are cleared without preventing later indexes on the same model from being updated. Index replacement is not atomic.
+
 Additional indexing/query options can be used as parameters to `fulltext_search_in`.
 
 * `alphabet`: a string allowlist or a regular expression matched against each character, default is `abcdefghijklmnopqrstuvwxyz0123456789 `.
