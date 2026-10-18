@@ -11,16 +11,19 @@ require 'cgi'
 require 'mongoid/full_text_search/ngrams'
 require 'mongoid/full_text_search/index_definition'
 require 'mongoid/full_text_search/field_scores'
+require 'mongoid/full_text_search/highlighter'
 
 module Mongoid::FullTextSearch
   extend ActiveSupport::Concern
 
   included do
     cattr_accessor :mongoid_fulltext_config
+    extend HighlightedSearch
   end
 
   class UnspecifiedIndexError < StandardError; end
   class UnknownFilterQueryOperator < StandardError; end
+  HighlightedResult = Struct.new(:document, :highlights, :score)
 
   module ClassMethods
     def fulltext_search_in(*args)
@@ -270,6 +273,26 @@ module Mongoid::FullTextSearch
 
     def format_query_filter(operator, key, value)
       ['filter_values.%s' % key, { operator => [value].flatten }]
+    end
+  end
+
+  def fulltext_highlights(query, options = {}, &block)
+    index = options.fetch(:index) do
+      raise UnspecifiedIndexError, 'Specify :index for a model with multiple full-text indexes' if mongoid_fulltext_config.length > 1
+
+      mongoid_fulltext_config.keys.first
+    end
+    config = mongoid_fulltext_config.fetch(index)
+    fields = Array(options.fetch(:fields, config[:ngram_fields])).map(&:to_sym)
+    raise ArgumentError, ':fields must contain indexed field names' unless (fields - config[:ngram_fields].map(&:to_sym)).empty?
+
+    fields.each_with_object({}) do |field, highlights|
+      value = send(field)
+      highlights[field] = if value.is_a?(Array)
+                            value.map { |text| Highlighter.highlight(text, query, config, &block) }
+                          else
+                            Highlighter.highlight(value, query, config, &block)
+                          end
     end
   end
 
