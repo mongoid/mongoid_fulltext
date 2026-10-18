@@ -15,7 +15,7 @@ jobs:
       matrix:
         include:
           - { ruby: '2.1.9', mongoid: '~> 3.0.0', mongodb: '3.6', bundler: '1.17.3' }
-          - { ruby: '2.3.8', mongoid: '~> 3.1.0', mongodb: '3.6', bundler: '2.3.26' }
+          - { ruby: '2.3.8', mongoid: '~> 3.1.0', mongodb: '3.6', bundler: '2.3.26', coverage: true }
           - { ruby: '2.3.8', mongoid: '4', mongodb: '3.6', bundler: '2.3.26' }
           - { ruby: '2.3.8', mongoid: '5', mongodb: '4.0', bundler: '2.3.26' }
           - { ruby: '2.5.9', mongoid: '6', mongodb: '4.0', bundler: default }
@@ -23,10 +23,10 @@ jobs:
           - { ruby: '3.2', mongoid: '8', mongodb: '6.0', bundler: default }
           - { ruby: '3.3', mongoid: '9', mongodb: '7.0', bundler: default }
           - { ruby: '3.4', mongoid: '9', mongodb: '8.0', bundler: default }
-          - { ruby: '4.0', mongoid: '9', mongodb: '8.0', bundler: default }
+          - { ruby: '4.0', mongoid: '9', mongodb: '8.0', bundler: default, coverage: true }
     env:
       MONGOID_VERSION: ${{ matrix.mongoid }}
-      COVERAGE: ${{ (matrix.mongoid == '~> 3.1.0' || matrix.ruby == '4.0') && 'true' || 'false' }}
+      COVERAGE: ${{ matrix.coverage }}
     services:
       mongodb:
         image: mongo:${{ matrix.mongodb }}
@@ -43,7 +43,7 @@ jobs:
           bundler-cache: true
       - run: bundle exec rake spec
       - name: Report coverage to Coveralls
-        if: matrix.mongoid == '~> 3.1.0' || matrix.ruby == '4.0'
+        if: matrix.coverage
         uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
