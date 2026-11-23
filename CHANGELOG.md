@@ -18,6 +18,7 @@
 * [#45](https://github.com/mongoid/mongoid_fulltext/pull/45): Allow for class level ngram updates to not timeout - [@roykolak](https://github.com/roykolak).
 * [#77](https://github.com/mongoid/mongoid_fulltext/pull/77): Upgrade danger-pr-comment to 0.3.0 from the `danger` organization and skip empty Danger report comments - [@dblock](https://github.com/dblock).
 * Your contribution here.
+* [#72](https://github.com/mongoid/mongoid_fulltext/pull/72): Lint Markdown, YAML, and spelling with rubocop-md, rubocop-prose, rubocop-spellcheck, and rubocop-yaml in a separate Lint workflow, and clean up documentation - [@dblock](https://github.com/dblock).
 
 ### 0.8.2 (2018/08/05)
 
