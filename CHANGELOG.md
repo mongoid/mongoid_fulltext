@@ -1,5 +1,6 @@
 ### 0.9.0 (Next)
 
+* [#70](https://github.com/mongoid/mongoid_fulltext/pull/70): Fix scoped searches ignoring criteria on document ids with Mongoid 7.0 and older - [@dblock](https://github.com/dblock).
 * [#68](https://github.com/mongoid/mongoid_fulltext/pull/68): Cover candidate-budget boundaries and combine coverage from actual legacy and modern drivers - [@dblock](https://github.com/dblock).
 * [#61](https://github.com/mongoid/mongoid_fulltext/pull/61): Support weighted fields with configurable maximum or summed field-score aggregation - [@dblock](https://github.com/dblock).
 * [#60](https://github.com/mongoid/mongoid_fulltext/pull/60): Extract ngram calculation and index-definition planning for maintainability without changing model APIs or search behavior - [@tomasc](https://github.com/tomasc), [@dblock](https://github.com/dblock).
