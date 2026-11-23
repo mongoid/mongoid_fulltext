@@ -19,5 +19,9 @@ end
 
 group :development do
   gem 'rake'
+  if RUBY_ENGINE == 'ruby' && Gem::Version.new(RUBY_VERSION) >= Gem::Version.new('3.3')
+    gem 'commonmarker', '~> 2.10', require: false
+    gem 'ruby-gem-release', '0.9.0', require: false
+  end
   gem 'rubocop', ENV.fetch('RUBOCOP_VERSION', RUBY_VERSION >= '2.7' ? '1.92.0' : '0.55')
 end
