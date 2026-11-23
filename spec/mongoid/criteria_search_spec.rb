@@ -22,6 +22,12 @@ describe 'Scoped full-text searches' do
     expect(ScopedArtwork.where(value: 10).fulltext_search('flowers', max_results: 1)).to eq([included])
   end
 
+  it 'combines criteria on document ids with the result limit' do
+    ScopedArtwork.create!(title: 'Flowers')
+    included = ScopedArtwork.create!(title: 'Flowers in a vase')
+    expect(ScopedArtwork.where(id: included.id).fulltext_search('flowers', max_results: 1)).to eq([included])
+  end
+
   it 'preserves scores and relevance order in a scoped search' do
     first = ScopedArtwork.create!(title: 'Flowers', value: 10)
     second = ScopedArtwork.create!(title: 'Flowers in a vase', value: 10)

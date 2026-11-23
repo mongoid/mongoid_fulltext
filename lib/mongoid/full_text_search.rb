@@ -212,7 +212,8 @@ module Mongoid::FullTextSearch
     def instantiate_mapreduce_result(result)
       scope = criteria
       scope = result[:clazz].constantize.criteria if scope.selector.empty?
-      scope.where(_id: result[:id]).first
+      # Mongoid 7.0 and older replace an existing _id condition with where; and keeps both.
+      scope.and(_id: result[:id]).first
     end
 
     def instantiate_mapreduce_results(results, options)
