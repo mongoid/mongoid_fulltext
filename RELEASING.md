@@ -1,4 +1,4 @@
-# Releasing mongoid_fulltext
+# Releasing `mongoid_fulltext`
 
 Releases use [ruby-gem-release](https://github.com/dblock/ruby-gem-release) 0.9.0 through a manually dispatched [Release workflow](.github/workflows/release.yml). Keep the `ruby-gem-release` gem in [Gemfile](Gemfile) and the reusable workflow in `release.yml` pinned to the same version. The workflow publishes through RubyGems Trusted Publishing, so no RubyGems API key or one-time password is needed. It only runs from `master` in `mongoid/mongoid_fulltext`.
 

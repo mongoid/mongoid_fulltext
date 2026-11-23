@@ -2,7 +2,7 @@
 
 ## 0.9.0
 
-### Weighted fields
+### Weighted Fields
 
 `:priorities` and `:score_aggregation` are opt-in. Indexes declaring neither option retain the existing last-field-wins behavior and exact scores, and require no rebuild. Opted-in indexes use maximum per-field array contributions followed by either maximum or summed weighted field contributions. Even `:priorities => {}` or `:score_aggregation => :max` intentionally switches from legacy merging to maximum scoring.
 
@@ -16,13 +16,13 @@ This replaces each document's stored scores, including all configured locales. N
 
 Remove neither option without rebuilding again: unweighted declarations will only restore legacy scores as documents are subsequently reindexed. Review result ordering, score thresholds, and candidate limits when adopting weights or sum aggregation; the unweighted prefix/full-word scoring thresholds do not apply to weighted/summed scores.
 
-### Query ngram sampling
+### Query Ngram Sampling
 
 Query sampling now respects `max_ngrams_to_search` and spans both ends of the query when selecting at least two sliding-window ngrams. For example, selecting three 3-character ngrams from `abcdefghijk` previously produced `abc`, `def`, and `ghi`; it now produces `abc`, `efg`, and `ijk`. A limit of one selects the first window. Full-word and short-prefix terms are added separately and can increase the total number of queried terms.
 
 The same query can return different matches or a different result order because scores are calculated from a different selection of query fragments. Review any application expectations that depend on exact matches, rankings, or score thresholds. No index rebuild is needed for this sampling change: document indexes already store every ngram, and only query-time selection changes.
 
-### Localized fields
+### Localized Fields
 
 Indexes that explicitly include a Mongoid localized field now store ngrams for all configured locales in the original index collection, distinguished by a string `locale` field. Previously only the active translation was indexed, without locale metadata. Searches now filter by locale, and the compound search index begins with `locale`, `ngram`, and `score`. Nonlocalized indexes are unchanged.
 

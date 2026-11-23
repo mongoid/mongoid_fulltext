@@ -16,6 +16,7 @@
 * [#51](https://github.com/mongoid/mongoid_fulltext/pull/51): Modernize CI through Ruby 4.0, Mongoid 9, and MongoDB 8 with real coverage, RuboCop 1.92, and fork-safe Danger workflows - [@dblock](https://github.com/dblock).
 * [#45](https://github.com/mongoid/mongoid_fulltext/pull/45): Allow for class level ngram updates to not timeout - [@roykolak](https://github.com/roykolak).
 * Your contribution here.
+* [#72](https://github.com/mongoid/mongoid_fulltext/pull/72): Lint Markdown, YAML, and spelling with rubocop-md, rubocop-prose, rubocop-spellcheck, and rubocop-yaml in a separate Lint workflow, and clean up documentation - [@dblock](https://github.com/dblock).
 
 ### 0.8.2 (2018/08/05)
 
