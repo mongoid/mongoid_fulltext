@@ -1,5 +1,6 @@
 ### 0.9.0 (Next)
 
+* [#67](https://github.com/mongoid/mongoid_fulltext/pull/67): Add `fulltext_search_with_highlights` with complete highlighted fields, bold default markup and custom rendering blocks without positional index storage, honoring chained criteria and `max_results` like `fulltext_search` - [@dblock](https://github.com/dblock).
 * [#70](https://github.com/mongoid/mongoid_fulltext/pull/70): Fix scoped searches ignoring criteria on document ids with Mongoid 7.0 and older - [@dblock](https://github.com/dblock).
 * [#68](https://github.com/mongoid/mongoid_fulltext/pull/68): Cover candidate-budget boundaries and combine coverage from actual legacy and modern drivers - [@dblock](https://github.com/dblock).
 * [#61](https://github.com/mongoid/mongoid_fulltext/pull/61): Support weighted fields with configurable maximum or summed field-score aggregation - [@dblock](https://github.com/dblock).
