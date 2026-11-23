@@ -1,5 +1,4 @@
-$LOAD_PATH.push File.expand_path('lib', __dir__)
-require 'mongoid/full_text_search/version'
+require_relative 'lib/mongoid/full_text_search/version'
 
 Gem::Specification.new do |s|
   s.name = 'mongoid_fulltext'
