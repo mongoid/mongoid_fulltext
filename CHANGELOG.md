@@ -1,4 +1,4 @@
-### 0.9.0 (Next)
+### 0.9.0 (2026/11/24)
 
 * [#75](https://github.com/mongoid/mongoid_fulltext/pull/75): Ignore `vendor/bundle` so the release workflow's clean-checkout check passes after `bundler-cache` installs gems - [@dblock](https://github.com/dblock).
 * [#71](https://github.com/mongoid/mongoid_fulltext/pull/71): Release with ruby-gem-release from a manually dispatched GitHub Actions workflow using RubyGems Trusted Publishing, with dry runs - [@dblock](https://github.com/dblock).
@@ -17,7 +17,6 @@
 * [#51](https://github.com/mongoid/mongoid_fulltext/pull/51): Modernize CI through Ruby 4.0, Mongoid 9, and MongoDB 8 with real coverage, RuboCop 1.92, and fork-safe Danger workflows - [@dblock](https://github.com/dblock).
 * [#45](https://github.com/mongoid/mongoid_fulltext/pull/45): Allow for class level ngram updates to not timeout - [@roykolak](https://github.com/roykolak).
 * [#77](https://github.com/mongoid/mongoid_fulltext/pull/77): Upgrade danger-pr-comment to 0.3.0 from the `danger` organization and skip empty Danger report comments - [@dblock](https://github.com/dblock).
-* Your contribution here.
 * [#72](https://github.com/mongoid/mongoid_fulltext/pull/72): Lint Markdown, YAML, and spelling with rubocop-md, rubocop-prose, rubocop-spellcheck, and rubocop-yaml in a separate Lint workflow, and clean up documentation - [@dblock](https://github.com/dblock).
 * [#73](https://github.com/mongoid/mongoid_fulltext/pull/73): Run CI pushes only on the default branch, cancel superseded pull request runs, skip duplicate lint in the test matrix, and bound job times - [@dblock](https://github.com/dblock).
 
