@@ -1,3 +1,7 @@
+### 0.9.1 (Next)
+
+* Your contribution here.
+
 ### 0.9.0 (2026/11/24)
 
 * [#75](https://github.com/mongoid/mongoid_fulltext/pull/75): Ignore `vendor/bundle` so the release workflow's clean-checkout check passes after `bundler-cache` installs gems - [@dblock](https://github.com/dblock).
