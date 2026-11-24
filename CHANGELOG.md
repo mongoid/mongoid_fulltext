@@ -15,6 +15,7 @@
 * [#55](https://github.com/mongoid/mongoid_fulltext/pull/55): Correct query ngram sampling to respect the configured limit and cover both ends of the query - [@dblock](https://github.com/dblock).
 * [#51](https://github.com/mongoid/mongoid_fulltext/pull/51): Modernize CI through Ruby 4.0, Mongoid 9, and MongoDB 8 with real coverage, RuboCop 1.92, and fork-safe Danger workflows - [@dblock](https://github.com/dblock).
 * [#45](https://github.com/mongoid/mongoid_fulltext/pull/45): Allow for class level ngram updates to not timeout - [@roykolak](https://github.com/roykolak).
+* [#77](https://github.com/mongoid/mongoid_fulltext/pull/77): Upgrade danger-pr-comment to 0.3.0 from the `danger` organization and skip empty Danger report comments - [@dblock](https://github.com/dblock).
 * Your contribution here.
 
 ### 0.8.2 (2018/08/05)
