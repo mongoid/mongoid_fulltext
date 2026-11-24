@@ -1,5 +1,6 @@
 ### 0.9.0 (Next)
 
+* [#75](https://github.com/mongoid/mongoid_fulltext/pull/75): Ignore `vendor/bundle` so the release workflow's clean-checkout check passes after `bundler-cache` installs gems - [@dblock](https://github.com/dblock).
 * [#71](https://github.com/mongoid/mongoid_fulltext/pull/71): Release with ruby-gem-release from a manually dispatched GitHub Actions workflow using RubyGems Trusted Publishing, with dry runs - [@dblock](https://github.com/dblock).
 * [#70](https://github.com/mongoid/mongoid_fulltext/pull/70): Fix scoped searches ignoring criteria on document ids with Mongoid 7.0 and older - [@dblock](https://github.com/dblock).
 * [#68](https://github.com/mongoid/mongoid_fulltext/pull/68): Cover candidate-budget boundaries and combine coverage from actual legacy and modern drivers - [@dblock](https://github.com/dblock).

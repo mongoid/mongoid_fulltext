@@ -46,3 +46,4 @@ tmtags
 
 Gemfile.lock
 Gemfile.danger.lock
+/vendor/bundle
